@@ -28,7 +28,7 @@ export class CopyPasteInteract {
 
   destroy() {
     // this.context.emitter.off('select', this.onSelect)
-    this.documentPointer.destroy()
+    // this.documentPointer.destroy()
   }
 
   onSelect = (selectInfo: DateSelectionApi) => {

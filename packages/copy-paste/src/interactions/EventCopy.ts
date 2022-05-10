@@ -268,11 +268,35 @@ export class EventCopy extends Interaction {
           })
         }
 
+
+        let addedEventDef = mutatedRelevantEvents.defs[eventDef.defId]
+        let addedEventInstance = mutatedRelevantEvents.instances[eventInstance.instanceId]
+        let addedEventApi = new EventApi(receivingContext, addedEventDef, addedEventInstance)
+
+        receivingContext.dispatch({
+          type: 'MERGE_EVENTS',
+          eventStore: mutatedRelevantEvents,
+        })
+
+        // let eventAddArg: EventAddArg = {
+        //   event: addedEventApi,
+        //   relatedEvents: buildEventApis(mutatedRelevantEvents, receivingContext, addedEventInstance),
+        //   revert() {
+        //     receivingContext.dispatch({
+        //       type: 'REMOVE_EVENTS',
+        //       eventStore: mutatedRelevantEvents,
+        //     })
+        //   },
+        // }
+
         receivingContext.emitter.trigger('eventCopy', {
           ...buildDatePointApiWithContext(finalHit.dateSpan, receivingContext),
           draggedEl: ev.subjectEl as HTMLElement,
           jsEvent: ev.origEvent as MouseEvent,
           type: this.type,
+          event: addedEventApi,
+          oldEvent: eventApi,
+          relatedEvents: buildEventApis(mutatedRelevantEvents, receivingContext, addedEventInstance),
           view: finalHit.context.viewApi
         })
       }

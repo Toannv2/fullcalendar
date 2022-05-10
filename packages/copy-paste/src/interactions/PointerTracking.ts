@@ -50,7 +50,7 @@ export class PointerTracking {
   tryStart = (ev: UIEvent): boolean => {
     let subjectEl = this.querySubjectEl(ev)
 
-    let containerEl = (ev.target as HTMLElement).closest('.fc-timeline-body')
+    let containerEl = (ev.target as HTMLElement).closest('.fc-timeline-body, .fc-timegrid-body')
     if (subjectEl && containerEl === this.containerEl) {
       this.subjectEl = subjectEl
       return true

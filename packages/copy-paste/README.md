@@ -4,7 +4,7 @@
 Copy and paste events using the keyboard.
 ### Copy:
 ```
-[Ctrl| Cmd] + C
+[Ctrl | Cmd] + C
 ```
 
 ### Paste:

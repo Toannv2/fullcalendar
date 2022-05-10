@@ -297,6 +297,7 @@ export class EventCopy extends Interaction {
           event: addedEventApi,
           oldEvent: eventApi,
           relatedEvents: buildEventApis(mutatedRelevantEvents, receivingContext, addedEventInstance),
+          relatedOldEvents: buildEventApis(relevantEvents, initialContext, eventInstance),
           view: finalHit.context.viewApi
         })
       }

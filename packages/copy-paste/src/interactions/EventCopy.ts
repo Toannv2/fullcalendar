@@ -15,7 +15,6 @@ import {
   ViewApi,
   EventChangeArg,
   buildEventApis,
-  EventAddArg,
   EventRemoveArg,
   isInteractionValid
 } from '@fullcalendar/common'
@@ -289,6 +288,7 @@ export class EventCopy extends Interaction {
         //   },
         // }
 
+        // @ts-ignore
         receivingContext.emitter.trigger('eventCopy', {
           ...buildDatePointApiWithContext(finalHit.dateSpan, receivingContext),
           draggedEl: ev.subjectEl as HTMLElement,
@@ -385,7 +385,7 @@ export class EventCopy extends Interaction {
     let newEvent = {
       ...this.mutatedRelevantEvents.defs[eventDef.defId]
     }
-
+    // @ts-ignore
     newEvent.resourceId = resourceId
 
     delete newEvent.defId

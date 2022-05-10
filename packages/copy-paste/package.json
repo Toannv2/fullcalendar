@@ -1,9 +1,9 @@
 {
-  "name": "@fullcalendar/copy-paste",
+  "name": "@classfunc/@fullcalendar/copy-paste",
   "version": "5.11.0",
   "title": "FullCalendar Copy-paste Plugin",
   "description": "Copy and paste events using the keyboard.",
-  "docs": "https://fullcalendar.io/docs/copy-paste",
+  "docs": "https://github.com/Toannv2/fullcalendar",
   "dependencies": {
     "@fullcalendar/common": "workspace:~5.11.0",
     "tslib": "^2.1.0"
@@ -17,14 +17,14 @@
   "bugs": "https://fullcalendar.io/reporting-bugs",
   "repository": {
     "type": "git",
-    "url": "https://github.com/fullcalendar/fullcalendar.git",
-    "homepage": "https://github.com/fullcalendar/fullcalendar"
+    "url": "https://github.com/Toannv2/fullcalendar.git",
+    "homepage": "https://github.com/Toannv2/fullcalendar"
   },
   "license": "MIT",
   "author": {
-    "name": "Adam Shaw",
-    "email": "arshaw@arshaw.com",
-    "url": "http://arshaw.com/"
+    "name": "Toan Nguyen",
+    "email": "toannv@classfunc.com",
+    "url": "https://github.com/toannguyen2/"
   },
   "devDependencies": {
     "@fullcalendar/core-preact": "workspace:*"

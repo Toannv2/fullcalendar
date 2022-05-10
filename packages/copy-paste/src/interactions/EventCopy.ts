@@ -150,8 +150,6 @@ export class EventCopy extends Interaction {
       }
     }
 
-    // this.displayDrag(receivingContext, interaction)
-
     if (!isInvalid) {
       enableCursor()
     } else {
@@ -185,8 +183,6 @@ export class EventCopy extends Interaction {
     let relevantEvents = this.relevantEvents!
     let mutatedRelevantEvents = this.mutatedRelevantEvents!
     let { finalHit } = this.hitDragging
-
-    // this.clearDrag() // must happen after revert animation
 
     if (validMutation) {
       // dropped within same calendar
@@ -267,26 +263,9 @@ export class EventCopy extends Interaction {
           })
         }
 
-
         let addedEventDef = mutatedRelevantEvents.defs[eventDef.defId]
         let addedEventInstance = mutatedRelevantEvents.instances[eventInstance.instanceId]
         let addedEventApi = new EventApi(receivingContext, addedEventDef, addedEventInstance)
-
-        receivingContext.dispatch({
-          type: 'MERGE_EVENTS',
-          eventStore: mutatedRelevantEvents,
-        })
-
-        // let eventAddArg: EventAddArg = {
-        //   event: addedEventApi,
-        //   relatedEvents: buildEventApis(mutatedRelevantEvents, receivingContext, addedEventInstance),
-        //   revert() {
-        //     receivingContext.dispatch({
-        //       type: 'REMOVE_EVENTS',
-        //       eventStore: mutatedRelevantEvents,
-        //     })
-        //   },
-        // }
 
         // @ts-ignore
         receivingContext.emitter.trigger('eventCopy', {
@@ -301,8 +280,6 @@ export class EventCopy extends Interaction {
           view: finalHit.context.viewApi
         })
       }
-    } else {
-      initialContext.emitter.trigger('_noEventDrop')
     }
 
     this.cleanup()

@@ -34,14 +34,12 @@ export class PointerTracking {
   constructor(containerEl: EventTarget) {
     this.containerEl = containerEl
     this.emitter = new Emitter()
-    console.log('.............')
     document.body.addEventListener('mousemove', this.handleMouseMove)
     document.body.addEventListener('keydown', this.handleKeyDown, false)
     document.body.addEventListener('keyup', this.handleKeyUp, false)
   }
 
   destroy() {
-    console.log('.............destroy')
     document.body.removeEventListener('mousemove', this.handleMouseMove)
     document.body.removeEventListener('keydown', this.handleKeyDown, false)
     document.body.removeEventListener('keyup', this.handleKeyUp, false)

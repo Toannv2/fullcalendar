@@ -18,6 +18,7 @@ import {
   EventRemoveArg,
   isInteractionValid
 } from '@fullcalendar/common'
+import moment from 'moment-timezone'
 import { __assign } from 'tslib'
 import { HitChecker, isHitsEqual } from './HitChecker'
 import { FeaturefulElementCopy } from '../dnd/FeaturefulElementCopy'
@@ -25,6 +26,8 @@ import { buildDatePointApiWithContext } from '../utils'
 
 export type EventDragStopArg = EventDragArg
 export type EventDragStartArg = EventDragArg
+
+const FORMAT_TIME = 'YYYY-MM-DDTHH:mm:ss'
 
 export interface EventDragArg {
   el: HTMLElement
@@ -68,7 +71,6 @@ export class EventCopy extends Interaction {
   }
 
   destroy() {
-    console.log('destroy')
     this.dragging.destroy()
   }
 
@@ -346,35 +348,31 @@ export class EventCopy extends Interaction {
     let eventInstance = this.eventRange!.instance
     let eventDef = this.eventRange!.def
 
-    // let { component } = this
-    // let { options } = component.context
+    // @ts-ignore
+    let { component } = this
+    let { options } = component.context
 
-    // let timeZone = options.timeZone
-    // console.log(timeZone)
-    let offset = 0
-    // let offsetLocal = new Date().getTimezoneOffset() * 60 * 1000
-    // timeZone
+    let timeZone = options.timeZone === 'local' ? Intl.DateTimeFormat().resolvedOptions().timeZone : options.timeZone
 
     let { finalHit } = this.hitDragging
     let resourceId = finalHit.dateSpan.resourceId
     // finalHit.dateSpan.range
 
-    let newEvent = {
+    let newEvent: any = {
       ...this.mutatedRelevantEvents.defs[eventDef.defId]
     }
     // @ts-ignore
     newEvent.resourceId = resourceId
 
     delete newEvent.defId
-    // @ts-ignore
     delete newEvent.publicId
-    // @ts-ignore
     delete newEvent.resourceIds
 
-    // @ts-ignore
-    newEvent.start = new Date(this.mutatedRelevantEvents.instances[eventInstance.instanceId].range.start.getTime() + offset)
-    // @ts-ignore
-    newEvent.end = new Date(this.mutatedRelevantEvents.instances[eventInstance.instanceId].range.end.getTime() + offset)
+    newEvent.start = moment.utc(this.mutatedRelevantEvents.instances[eventInstance.instanceId].range.start).format(FORMAT_TIME)
+    newEvent.end = moment.utc(this.mutatedRelevantEvents.instances[eventInstance.instanceId].range.end).format(FORMAT_TIME)
+    newEvent.start = moment.tz(newEvent.start, timeZone).format()
+    newEvent.end = moment.tz(newEvent.end, timeZone).format()
+
     return newEvent
   }
 }

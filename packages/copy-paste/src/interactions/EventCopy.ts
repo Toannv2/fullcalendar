@@ -1,10 +1,8 @@
 import {
-  // DateComponent,
   Seg,
   PointerDragEvent, Hit,
   EventMutation, applyMutationToEventStore,
   startOfDay,
-  // elementClosest,
   EventStore, getRelevantEvents, createEmptyEventStore,
   EventInteractionState,
   diffDates, enableCursor, disableCursor,
@@ -20,11 +18,9 @@ import {
   EventAddArg,
   EventRemoveArg,
   isInteractionValid
-  // getElRoot
 } from '@fullcalendar/common'
 import { __assign } from 'tslib'
 import { HitChecker, isHitsEqual } from './HitChecker'
-// import { buildDatePointApiWithContext } from '../utils'
 import { FeaturefulElementCopy } from '../dnd/FeaturefulElementCopy'
 import { buildDatePointApiWithContext } from '../utils'
 
@@ -60,7 +56,7 @@ export class EventCopy extends Interaction {
     super(settings)
 
     // @ts-ignore
-    let dragging = this.dragging = new FeaturefulElementCopy(document)
+    let dragging = this.dragging = new FeaturefulElementCopy(settings.el)
     dragging.pointer.selector = EventCopy.SELECTOR
 
     let hitDragging = this.hitDragging = new HitChecker(this.dragging, interactionSettingsStore)
@@ -73,6 +69,7 @@ export class EventCopy extends Interaction {
   }
 
   destroy() {
+    console.log('destroy')
     this.dragging.destroy()
   }
 
@@ -257,13 +254,6 @@ export class EventCopy extends Interaction {
               }
             }
 
-            // @ts-ignore
-            initialContext.emitter.trigger('eventLeave', {
-              ...eventRemoveArg,
-              draggedEl: ev.subjectEl as HTMLElement,
-              view: initialView
-            })
-
             initialContext.dispatch({
               type: 'REMOVE_EVENTS',
               eventStore: relevantEvents
@@ -272,34 +262,17 @@ export class EventCopy extends Interaction {
             initialContext.emitter.trigger('eventRemove', eventRemoveArg)
           }
 
-          let addedEventDef = mutatedRelevantEvents.defs[eventDef.defId]
-          let addedEventInstance = mutatedRelevantEvents.instances[eventInstance.instanceId]
-          let addedEventApi = new EventApi(receivingContext, addedEventDef, addedEventInstance)
-
           receivingContext.dispatch({
             type: 'MERGE_EVENTS',
             eventStore: mutatedRelevantEvents
           })
-
-          let eventAddArg: EventAddArg = {
-            event: addedEventApi,
-            relatedEvents: buildEventApis(mutatedRelevantEvents, receivingContext, addedEventInstance),
-            revert() {
-              receivingContext.dispatch({
-                type: 'REMOVE_EVENTS',
-                eventStore: mutatedRelevantEvents
-              })
-            }
-          }
-
-          receivingContext.emitter.trigger('eventAdd', eventAddArg)
         }
 
-        // @ts-ignore
         receivingContext.emitter.trigger('eventCopy', {
           ...buildDatePointApiWithContext(finalHit.dateSpan, receivingContext),
           draggedEl: ev.subjectEl as HTMLElement,
-          jsEvent: ev.origEvent as MouseEvent, // Is this always a mouse event? See #4655
+          jsEvent: ev.origEvent as MouseEvent,
+          type: this.type,
           view: finalHit.context.viewApi
         })
       }
@@ -363,23 +336,32 @@ export class EventCopy extends Interaction {
     this.receivingContext = null
     this.validMutation = null
     this.mutatedRelevantEvents = null
+
+    this.hitDragging.cleanup()
   }
 
   cloneEvent() {
     let eventInstance = this.eventRange!.instance
     let eventDef = this.eventRange!.def
-    let offset = new Date().getTimezoneOffset() * 60 * 1000
 
+    // let { component } = this
+    // let { options } = component.context
+
+    // let timeZone = options.timeZone
+    // console.log(timeZone)
+    let offset = 0
+    // let offsetLocal = new Date().getTimezoneOffset() * 60 * 1000
+    // timeZone
+
+    let { finalHit } = this.hitDragging
+    let resourceId = finalHit.dateSpan.resourceId
+    // finalHit.dateSpan.range
 
     let newEvent = {
       ...this.mutatedRelevantEvents.defs[eventDef.defId]
     }
 
-    // @ts-ignore
-    if (newEvent.resourceIds && newEvent.resourceIds.length > 0) {
-      // @ts-ignore
-      newEvent.resourceId = newEvent.resourceIds[0]
-    }
+    newEvent.resourceId = resourceId
 
     delete newEvent.defId
     // @ts-ignore

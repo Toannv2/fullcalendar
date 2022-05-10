@@ -12,6 +12,7 @@
       let destCalendarEl = document.getElementById('destination-calendar')
 
       var srcCalendar = new FullCalendar.Calendar(srcCalendarEl, {
+        timeZone: 'local',
         now: '2020-09-07',
         scrollTime: '00:00', // undo default 6am scrollTime
         editable: true, // enable draggable events

@@ -56,7 +56,27 @@ export class HitChecker {
     this.emitter.trigger('pointer-duplicate', ev)
   }
 
+  handlePaste = (ev: PointerDragEvent) => {
+    if (!this.coordAdjust) return
+
+    let hit = this.queryHitForOffset(
+      ev.pageX + this.coordAdjust!.left,
+      ev.pageY + this.coordAdjust!.top
+    )
+
+    if (!isHitsEqual(this.movingHit, hit)) {
+      this.movingHit = hit
+    }
+
+    this.finalHit = this.movingHit
+    this.movingHit = null
+    this.emitter.trigger('hitupdate', hit, true, ev)
+
+    this.emitter.trigger('paste', ev)
+  }
+
   prevHandle = (ev: PointerDragEvent) => {
+    this.coordAdjust = null;
     this.initialHit = null
     this.movingHit = null
     this.finalHit = null
@@ -86,25 +106,8 @@ export class HitChecker {
 
       this.coordAdjust = diffPoints(adjustedPoint, origPoint)
     } else {
-      this.coordAdjust = { left: 0, top: 0 }
+      // this.coordAdjust = { left: 0, top: 0 }
     }
-  }
-
-  handlePaste = (ev: PointerDragEvent) => {
-    let hit = this.queryHitForOffset(
-      ev.pageX + this.coordAdjust!.left,
-      ev.pageY + this.coordAdjust!.top
-    )
-
-    if (!isHitsEqual(this.movingHit, hit)) {
-      this.movingHit = hit
-    }
-
-    this.finalHit = this.movingHit
-    this.movingHit = null
-    this.emitter.trigger('hitupdate', hit, true, ev)
-
-    this.emitter.trigger('paste', ev)
   }
 
   prepareHits() {
@@ -173,6 +176,10 @@ export class HitChecker {
     }
 
     return bestHit
+  }
+
+  cleanup = () => {
+    this.coordAdjust = null
   }
 }
 

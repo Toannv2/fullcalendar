@@ -16,7 +16,6 @@ export class PointerTracking {
 
   pressedMetaKey: boolean = false
   listKey = {}
-  fixedBehaviorLoop = {}
 
   lastPoint = null
 
@@ -35,25 +34,24 @@ export class PointerTracking {
   constructor(containerEl: EventTarget) {
     this.containerEl = containerEl
     this.emitter = new Emitter()
-    containerEl.addEventListener('mousemove', this.handleMouseMove)
+    console.log('.............')
+    document.body.addEventListener('mousemove', this.handleMouseMove)
     document.body.addEventListener('keydown', this.handleKeyDown, false)
     document.body.addEventListener('keyup', this.handleKeyUp, false)
   }
 
   destroy() {
-    this.containerEl.removeEventListener('mousemove', this.handleMouseMove)
+    console.log('.............destroy')
+    document.body.removeEventListener('mousemove', this.handleMouseMove)
     document.body.removeEventListener('keydown', this.handleKeyDown, false)
     document.body.removeEventListener('keyup', this.handleKeyUp, false)
   }
 
   tryStart = (ev: UIEvent): boolean => {
     let subjectEl = this.querySubjectEl(ev)
-    let downEl = ev.target as HTMLElement
 
-    if (
-      subjectEl &&
-      (!this.handleSelector || elementClosest(downEl, this.handleSelector))
-    ) {
+    let containerEl = (ev.target as HTMLElement).closest('.fc-timeline-body')
+    if (subjectEl && containerEl === this.containerEl) {
       this.subjectEl = subjectEl
       return true
     }
@@ -75,21 +73,21 @@ export class PointerTracking {
   // Keyboard
   // ----------------------------------------------------------------------------------------------------
   handleKeyDown = (ev: KeyboardEvent) => {
+    if (this.listKey[ev.key] !== void 0)
+      return
+
     if (allowKeyboard.includes(ev.key)) {
-      this.listKey[ev.code] = ev
+      this.listKey[ev.key] = ev
     }
+
     this.checkPrimaryKey()
     this.handleCopyPaste(ev)
   }
 
   handleKeyUp = (ev: KeyboardEvent) => {
-    if (allowKeyboard.includes(ev.key)) {
-      delete this.listKey[ev.code]
-    }
-    this.checkPrimaryKey()
-    delete this.fixedBehaviorLoop[ev.key]
+    delete this.listKey[ev.key]
     if (ev.key === KEY_META) {
-      this.fixedBehaviorLoop = {}
+      this.listKey = {}
     }
   }
 
@@ -118,11 +116,6 @@ export class PointerTracking {
   }
 
   handleCopy = () => {
-    if (this.fixedBehaviorLoop[KEY_C])
-      return
-
-    this.fixedBehaviorLoop[KEY_C] = true
-
     if (this.tryStart(this.lastPoint)) {
       let pev = this.createEventFromMouse(this.lastPoint, true)
       this.emitter.trigger('pointer-copy', pev)
@@ -130,19 +123,10 @@ export class PointerTracking {
   }
 
   handlePaste = () => {
-    if (this.fixedBehaviorLoop[KEY_V])
-      return
-
-    this.fixedBehaviorLoop[KEY_V] = true
     this.emitter.trigger('pointer-paste', this.createEventFromMouse(this.lastPoint))
   }
 
   handleCut = () => {
-    if (this.fixedBehaviorLoop[KEY_X])
-      return
-
-    this.fixedBehaviorLoop[KEY_X] = true
-
     if (this.tryStart(this.lastPoint)) {
       let pev = this.createEventFromMouse(this.lastPoint, true)
       this.emitter.trigger('pointer-cut', pev)
@@ -150,11 +134,6 @@ export class PointerTracking {
   }
 
   handleDuplicate = () => {
-    if (this.fixedBehaviorLoop[KEY_D])
-      return
-
-    this.fixedBehaviorLoop[KEY_D] = true
-
     this.emitter.trigger('pointer-duplicate', this.lastPoint)
   }
 

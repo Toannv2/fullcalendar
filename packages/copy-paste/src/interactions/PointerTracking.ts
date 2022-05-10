@@ -119,6 +119,9 @@ export class PointerTracking {
     if (this.tryStart(this.lastPoint)) {
       let pev = this.createEventFromMouse(this.lastPoint, true)
       this.emitter.trigger('pointer-copy', pev)
+    } else {
+      this.cleanup()
+      this.emitter.trigger('cleanup', true)
     }
   }
 
@@ -130,6 +133,9 @@ export class PointerTracking {
     if (this.tryStart(this.lastPoint)) {
       let pev = this.createEventFromMouse(this.lastPoint, true)
       this.emitter.trigger('pointer-cut', pev)
+    } else {
+      this.cleanup()
+      this.emitter.trigger('cleanup', true)
     }
   }
 

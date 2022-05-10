@@ -35,6 +35,7 @@ export class HitChecker {
     dragging.emitter.on('pointer-cut', this.handleCut)
     dragging.emitter.on('pointer-duplicate', this.handleDuplicate)
     dragging.emitter.on('pointer-paste', this.handlePaste)
+    dragging.emitter.emitter.on('cleanup', this.cleanup)
 
     // @ts-ignore
     this.dragging = dragging
@@ -76,7 +77,7 @@ export class HitChecker {
   }
 
   prevHandle = (ev: PointerDragEvent) => {
-    this.coordAdjust = null;
+    this.coordAdjust = null
     this.initialHit = null
     this.movingHit = null
     this.finalHit = null

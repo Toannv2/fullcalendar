@@ -45,6 +45,7 @@ export class FeaturefulElementCopy {
     pointer.emitter.on('pointer-cut', this.onPointerCut)
     pointer.emitter.on('pointer-duplicate', this.onPointerDuplicate)
     pointer.emitter.on('pointer-paste', this.onPointerPaste)
+    pointer.emitter.on('cleanup', this.cleanup)
 
     if (selector) {
       pointer.selector = selector
@@ -72,5 +73,9 @@ export class FeaturefulElementCopy {
     allowContextMenu(document.body)
 
     this.emitter.trigger('pointer-paste', ev)
+  }
+
+  cleanup = () => {
+    this.emitter.trigger('cleanup', true)
   }
 }

@@ -2044,6 +2044,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@fullcalendar/copy-paste@workspace:packages/copy-paste, @fullcalendar/copy-paste@workspace:~5.11.0":
+  version: 0.0.0-use.local
+  resolution: "@fullcalendar/copy-paste@workspace:packages/copy-paste"
+  dependencies:
+    "@fullcalendar/common": "workspace:~5.11.0"
+    "@fullcalendar/core-preact": "workspace:*"
+    tslib: ^2.1.0
+  languageName: unknown
+  linkType: soft
+
 "@fullcalendar/core-preact@workspace:*, @fullcalendar/core-preact@workspace:packages/core-preact":
   version: 0.0.0-use.local
   resolution: "@fullcalendar/core-preact@workspace:packages/core-preact"
@@ -11508,6 +11518,7 @@ fsevents@^1.2.7:
     "@fullcalendar/adaptive": "workspace:~5.11.0"
     "@fullcalendar/bootstrap": "workspace:~5.11.0"
     "@fullcalendar/bootstrap5": "workspace:~5.11.0"
+    "@fullcalendar/copy-paste": "workspace:~5.11.0"
     "@fullcalendar/core": "workspace:~5.11.0"
     "@fullcalendar/daygrid": "workspace:~5.11.0"
     "@fullcalendar/google-calendar": "workspace:~5.11.0"
@@ -11630,6 +11641,7 @@ fsevents@^1.2.7:
   dependencies:
     "@fullcalendar/bootstrap": "workspace:~5.11.0"
     "@fullcalendar/bootstrap5": "workspace:~5.11.0"
+    "@fullcalendar/copy-paste": "workspace:~5.11.0"
     "@fullcalendar/core": "workspace:~5.11.0"
     "@fullcalendar/daygrid": "workspace:~5.11.0"
     "@fullcalendar/google-calendar": "workspace:~5.11.0"

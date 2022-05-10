@@ -15,6 +15,7 @@
     { "path": "../list" },
     { "path": "../bootstrap" },
     { "path": "../bootstrap5" },
-    { "path": "../google-calendar" }
+    { "path": "../google-calendar" },
+    { "path": "../copy-paste" }
   ]
 }

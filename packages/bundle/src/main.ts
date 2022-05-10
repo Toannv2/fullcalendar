@@ -6,6 +6,7 @@ import listPlugin from '@fullcalendar/list'
 import bootstrapPlugin from '@fullcalendar/bootstrap'
 import bootstrapPlugin5 from '@fullcalendar/bootstrap5'
 import googleCalendarPlugin from '@fullcalendar/google-calendar'
+import copyPastePlugin from '@fullcalendar/copy-paste'
 
 globalPlugins.push(
   interactionPlugin,
@@ -15,6 +16,7 @@ globalPlugins.push(
   bootstrapPlugin,
   bootstrapPlugin5,
   googleCalendarPlugin,
+  copyPastePlugin
 )
 
 export * from '@fullcalendar/core'
@@ -24,3 +26,4 @@ export * from '@fullcalendar/timegrid'
 export * from '@fullcalendar/list'
 export * from '@fullcalendar/bootstrap' // bootstrap5 not exported
 export * from '@fullcalendar/google-calendar'
+export * from '@fullcalendar/copy-paste'

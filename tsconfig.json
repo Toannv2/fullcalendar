@@ -15,6 +15,7 @@
     { "path": "packages/bootstrap" },
     { "path": "packages/bootstrap5" },
     { "path": "packages/google-calendar" },
+    { "path": "packages/copy-paste" },
     { "path": "packages/luxon" },
     { "path": "packages/luxon2" },
     { "path": "packages/moment" },

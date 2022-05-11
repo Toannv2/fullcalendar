@@ -259,10 +259,13 @@ export class EventCopy extends Interaction {
             initialContext.emitter.trigger('eventRemove', eventRemoveArg)
           }
 
-          receivingContext.dispatch({
-            type: 'MERGE_EVENTS',
-            eventStore: mutatedRelevantEvents
-          })
+          let newEvent = this.cloneEvent()
+          receivingContext.calendarApi.addEvent(newEvent)
+
+          // receivingContext.dispatch({
+          //   type: 'MERGE_EVENTS',
+          //   eventStore: mutatedRelevantEvents
+          // })
         }
 
         let addedEventDef = mutatedRelevantEvents.defs[eventDef.defId]
@@ -346,27 +349,30 @@ export class EventCopy extends Interaction {
 
   cloneEvent() {
     let eventInstance = this.eventRange!.instance
-    let eventDef = this.eventRange!.def
 
     // @ts-ignore
     let { component } = this
     let { options } = component.context
 
-    let timeZone = options.timeZone === 'local' ? Intl.DateTimeFormat().resolvedOptions().timeZone : options.timeZone
+    let timeZone = options.timeZone === 'local' || !options.timeZone ? Intl.DateTimeFormat().resolvedOptions().timeZone : options.timeZone
 
     let { finalHit } = this.hitDragging
     let resourceId = finalHit.dateSpan.resourceId
-    // finalHit.dateSpan.range
 
     let newEvent: any = {
-      ...this.mutatedRelevantEvents.defs[eventDef.defId]
+      ...this.eventRange.ui,
+      ...this.eventRange.def,
     }
     // @ts-ignore
     newEvent.resourceId = resourceId
 
+    delete newEvent.ui
     delete newEvent.defId
     delete newEvent.publicId
     delete newEvent.resourceIds
+    delete newEvent.extendedProps
+    delete newEvent.recurringDef
+    delete newEvent.sourceId
 
     newEvent.start = moment.utc(this.mutatedRelevantEvents.instances[eventInstance.instanceId].range.start).format(FORMAT_TIME)
     newEvent.end = moment.utc(this.mutatedRelevantEvents.instances[eventInstance.instanceId].range.end).format(FORMAT_TIME)

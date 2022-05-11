@@ -60,10 +60,7 @@ export class HitChecker {
   handlePaste = (ev: PointerDragEvent) => {
     if (!this.coordAdjust) return
 
-    let hit = this.queryHitForOffset(
-      ev.pageX + this.coordAdjust!.left,
-      ev.pageY + this.coordAdjust!.top
-    )
+    let hit = this.queryHitForOffset(ev.pageX, ev.pageY)
 
     if (!isHitsEqual(this.movingHit, hit)) {
       this.movingHit = hit
@@ -87,8 +84,13 @@ export class HitChecker {
 
   processFirstCoord(ev: PointerDragEvent) {
     let origPoint = { left: ev.pageX, top: ev.pageY }
+
+    // @ts-ignore
+    // let rect = ev.subjectEl.getBoundingClientRect()
+    // let origPoint = { left: Math.ceil(window.pageXOffset + rect.left), top: Math.ceil(window.pageYOffset + rect.top) }
+
     let adjustedPoint = origPoint
-    let subjectEl = ev.subjectEl
+    let subjectEl: any = ev.subjectEl
     let subjectRect
 
     if (subjectEl instanceof HTMLElement) { // i.e. not a Document/ShadowRoot
@@ -96,8 +98,11 @@ export class HitChecker {
       adjustedPoint = constrainPoint(adjustedPoint, subjectRect)
     }
 
-    let initialHit = this.initialHit = this.queryHitForOffset(adjustedPoint.left, adjustedPoint.top)
+    let initialHit: any = this.initialHit = this.queryHitForOffset(adjustedPoint.left, adjustedPoint.top)
+
     if (initialHit) {
+      // initialHit.dateSpan.start = subjectEl.fcSeg.start
+      // initialHit.dateSpan.end = subjectEl.fcSeg.end
       if (this.useSubjectCenter && subjectRect) {
         let slicedSubjectRect = intersectRects(subjectRect, initialHit.rect)
         if (slicedSubjectRect) {

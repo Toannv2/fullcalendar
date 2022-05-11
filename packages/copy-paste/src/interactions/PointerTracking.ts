@@ -9,6 +9,8 @@ const KEY_X = 'x'
 
 const allowKeyboard = [KEY_META, KEY_C, KEY_V, KEY_D, KEY_X]
 
+const CONTAINER_CLASS = '.fc-timeline, .fc-timegrid'
+
 export class PointerTracking {
   containerEl: EventTarget
   subjectEl: HTMLElement | null = null
@@ -48,8 +50,9 @@ export class PointerTracking {
   tryStart = (ev: UIEvent): boolean => {
     let subjectEl = this.querySubjectEl(ev)
 
-    let containerEl = (ev.target as HTMLElement).closest('.fc-timeline-body, .fc-timegrid-body')
-    if (subjectEl && containerEl === this.containerEl) {
+    let fcTimeEl = (ev.target as HTMLElement).closest(CONTAINER_CLASS)
+    let containerFcTimeEl = (this.containerEl as HTMLElement).closest(CONTAINER_CLASS)
+    if (subjectEl && fcTimeEl === containerFcTimeEl) {
       this.subjectEl = subjectEl
       return true
     }

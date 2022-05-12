@@ -6,8 +6,6 @@
   "docs": "https://github.com/Toannv2/fullcalendar",
   "dependencies": {
     "@fullcalendar/common": "workspace:~5.11.0",
-    "moment": "^2.29.3",
-    "moment-timezone": "^0.5.31",
     "tslib": "^2.1.0"
   },
   "main": "main.cjs.js",

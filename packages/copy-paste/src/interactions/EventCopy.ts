@@ -12,36 +12,22 @@ import {
   Interaction, InteractionSettings, interactionSettingsStore,
   EventDropTransformers,
   CalendarContext,
-  ViewApi,
   EventChangeArg,
   buildEventApis,
   EventRemoveArg,
   isInteractionValid
 } from '@fullcalendar/common'
-import moment from 'moment-timezone'
 import { __assign } from 'tslib'
-import { HitChecker, isHitsEqual } from './HitChecker'
+import { HitChecker } from './HitChecker'
 import { FeaturefulElementCopy } from '../dnd/FeaturefulElementCopy'
 import { buildDatePointApiWithContext } from '../utils'
-
-export type EventDragStopArg = EventDragArg
-export type EventDragStartArg = EventDragArg
-
-const FORMAT_TIME = 'YYYY-MM-DDTHH:mm:ss'
-
-export interface EventDragArg {
-  el: HTMLElement
-  event: EventApi
-  jsEvent: MouseEvent
-  view: ViewApi
-}
 
 export class EventCopy extends Interaction {
   static SELECTOR = '.fc-event'
 
   type: string
 
-  dragging: FeaturefulElementCopy
+  manager: FeaturefulElementCopy
   hitChecker: HitChecker
 
   // internal state
@@ -58,10 +44,10 @@ export class EventCopy extends Interaction {
     super(settings)
 
     // @ts-ignore
-    let dragging = this.dragging = new FeaturefulElementCopy(settings.el)
-    dragging.pointer.selector = EventCopy.SELECTOR
+    this.manager = new FeaturefulElementCopy(settings.el)
+    this.manager.pointer.selector = EventCopy.SELECTOR
 
-    let hitChecker = this.hitChecker = new HitChecker(this.dragging, interactionSettingsStore)
+    let hitChecker = this.hitChecker = new HitChecker(this.manager, interactionSettingsStore)
     hitChecker.useSubjectCenter = settings.useEventCenter
     hitChecker.emitter.on('pointer-copy', this.handleCopy)
     hitChecker.emitter.on('pointer-cut', this.handleCut)
@@ -70,7 +56,7 @@ export class EventCopy extends Interaction {
   }
 
   destroy() {
-    this.dragging.destroy()
+    this.manager.destroy()
   }
 
   handleCopy = (ev: PointerDragEvent) => {
@@ -284,7 +270,6 @@ export class EventCopy extends Interaction {
   clean() {  // reset all internal state
     this.type = null
     this.subjectSeg = null
-    this.isDragging = false
     this.eventRange = null
     this.relevantEvents = null
     this.receivingContext = null
@@ -294,12 +279,6 @@ export class EventCopy extends Interaction {
 
   cloneEvent() {
     let eventInstance = this.eventRange!.instance
-
-    // @ts-ignore
-    let { component } = this
-    let { options } = component.context
-
-    let timeZone = options.timeZone === 'local' || !options.timeZone ? Intl.DateTimeFormat().resolvedOptions().timeZone : options.timeZone
 
     let { finalHit } = this.hitChecker
     let resourceId = finalHit.dateSpan.resourceId
@@ -319,11 +298,12 @@ export class EventCopy extends Interaction {
     delete newEvent.recurringDef
     delete newEvent.sourceId
 
-    newEvent.start = moment.utc(this.mutatedRelevantEvents.instances[eventInstance.instanceId].range.start).format(FORMAT_TIME)
-    newEvent.end = moment.utc(this.mutatedRelevantEvents.instances[eventInstance.instanceId].range.end).format(FORMAT_TIME)
-    newEvent.start = moment.tz(newEvent.start, timeZone).format()
-    newEvent.end = moment.tz(newEvent.end, timeZone).format()
+    let offset = new Date().getTimezoneOffset() * 60 * 1000
 
+    // @ts-ignore
+    newEvent.start = new Date(this.mutatedRelevantEvents.instances[eventInstance.instanceId].range.start.getTime() + offset)
+    // @ts-ignore
+    newEvent.end = new Date(this.mutatedRelevantEvents.instances[eventInstance.instanceId].range.end.getTime() + offset)
     return newEvent
   }
 }

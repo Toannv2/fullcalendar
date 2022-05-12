@@ -42,7 +42,7 @@ export class EventCopy extends Interaction {
   type: string
 
   dragging: FeaturefulElementCopy
-  hitDragging: HitChecker
+  hitChecker: HitChecker
 
   // internal state
   subjectEl: HTMLElement | null = null
@@ -61,13 +61,12 @@ export class EventCopy extends Interaction {
     let dragging = this.dragging = new FeaturefulElementCopy(settings.el)
     dragging.pointer.selector = EventCopy.SELECTOR
 
-    let hitDragging = this.hitDragging = new HitChecker(this.dragging, interactionSettingsStore)
-    hitDragging.useSubjectCenter = settings.useEventCenter
-    hitDragging.emitter.on('pointer-copy', this.handleCopy)
-    hitDragging.emitter.on('pointer-cut', this.handleCut)
-    hitDragging.emitter.on('pointer-duplicate', this.handleDuplicate)
-    hitDragging.emitter.on('hitupdate', this.handleHitUpdate)
-    hitDragging.emitter.on('paste', this.handlePaste)
+    let hitChecker = this.hitChecker = new HitChecker(this.dragging, interactionSettingsStore)
+    hitChecker.useSubjectCenter = settings.useEventCenter
+    hitChecker.emitter.on('pointer-copy', this.handleCopy)
+    hitChecker.emitter.on('pointer-cut', this.handleCut)
+    hitChecker.emitter.on('pointer-duplicate', this.handleDuplicate)
+    hitChecker.emitter.on('paste', this.handlePaste)
   }
 
   destroy() {
@@ -90,7 +89,7 @@ export class EventCopy extends Interaction {
   }
 
   handleInputEvent = (ev: PointerDragEvent) => {
-    let { component } = this
+    let { component }: any = this
     let initialContext = component.context
     this.subjectEl = ev.subjectEl as HTMLElement
     let subjectSeg = this.subjectSeg = getElSeg(ev.subjectEl as HTMLElement)!
@@ -104,10 +103,11 @@ export class EventCopy extends Interaction {
   }
 
   handleHitUpdate = (hit: Hit | null, isFinal: boolean) => {
-    if (!this.type) return
+    if (!this.type || !hit) return
 
     let relevantEvents = this.relevantEvents!
-    let initialHit = this.hitDragging.initialHit!
+    let initialHit = this.hitChecker.initialHit!
+    // @ts-ignore
     let initialContext = this.component.context
 
     // states based on new hit
@@ -121,48 +121,39 @@ export class EventCopy extends Interaction {
       isEvent: true
     }
 
-    if (hit) {
-      receivingContext = hit.context
-      let receivingOptions = receivingContext.options
+    receivingContext = hit.context
+    let receivingOptions = receivingContext.options
 
-      if (
-        initialContext === receivingContext ||
-        (receivingOptions.editable && receivingOptions.droppable)
-      ) {
-        mutation = computeEventMutation(initialHit, hit, receivingContext.getCurrentData().pluginHooks.eventDragMutationMassagers)
+    if (
+      initialContext === receivingContext ||
+      (receivingOptions.editable && receivingOptions.droppable)
+    ) {
+      mutation = computeEventMutation(initialHit, hit, receivingContext.getCurrentData().pluginHooks.eventDragMutationMassagers, this.subjectSeg)
 
-        if (mutation && relevantEvents) {
-          mutatedRelevantEvents = applyMutationToEventStore(
-            relevantEvents,
-            receivingContext.getCurrentData().eventUiBases,
-            mutation,
-            receivingContext
-          )
-          interaction.mutatedEvents = mutatedRelevantEvents
+      if (mutation && relevantEvents) {
+        mutatedRelevantEvents = applyMutationToEventStore(
+          relevantEvents,
+          receivingContext.getCurrentData().eventUiBases,
+          mutation,
+          receivingContext
+        )
+        interaction.mutatedEvents = mutatedRelevantEvents
 
-          if (!isInteractionValid(interaction, hit.dateProfile, receivingContext)) {
-            isInvalid = true
-            mutation = null
-            mutatedRelevantEvents = null
-            interaction.mutatedEvents = createEmptyEventStore()
-          }
+        if (!isInteractionValid(interaction, hit.dateProfile, receivingContext)) {
+          isInvalid = true
+          mutation = null
+          mutatedRelevantEvents = null
+          interaction.mutatedEvents = createEmptyEventStore()
         }
-      } else {
-        receivingContext = null
       }
+    } else {
+      receivingContext = null
     }
 
     if (!isInvalid) {
       enableCursor()
     } else {
       disableCursor()
-    }
-
-    if (
-      initialContext === receivingContext && // TODO: write test for this
-      isHitsEqual(initialHit, hit)
-    ) {
-      mutation = null
     }
 
     this.receivingContext = receivingContext
@@ -173,9 +164,12 @@ export class EventCopy extends Interaction {
   handlePaste = (ev: PointerDragEvent) => {
     if (!this.type) return
 
-    let { component } = this
+    this.handleHitUpdate(this.hitChecker.finalHit, true)
+
+    let { component }: any = this
     let { options } = component.context
 
+    // @ts-ignore
     let initialContext = this.component.context
     let initialView = initialContext.viewApi
     let { receivingContext, validMutation } = this
@@ -184,11 +178,9 @@ export class EventCopy extends Interaction {
     let eventApi = new EventApi(initialContext, eventDef, eventInstance)
     let relevantEvents = this.relevantEvents!
     let mutatedRelevantEvents = this.mutatedRelevantEvents!
-    let { finalHit } = this.hitDragging
+    let { finalHit } = this.hitChecker
 
     if (validMutation) {
-      // dropped within same calendar
-
       if (receivingContext === initialContext) {
         let newEventApi = new EventApi(
           initialContext,
@@ -236,7 +228,6 @@ export class EventCopy extends Interaction {
           view: initialView
         })
 
-        // dropped in different calendar
       } else if (receivingContext) {
         if (options.previewCopy === void 0 || options.previewCopy === true) {
           if (this.type === 'cut') {
@@ -261,11 +252,6 @@ export class EventCopy extends Interaction {
 
           let newEvent = this.cloneEvent()
           receivingContext.calendarApi.addEvent(newEvent)
-
-          // receivingContext.dispatch({
-          //   type: 'MERGE_EVENTS',
-          //   eventStore: mutatedRelevantEvents
-          // })
         }
 
         let addedEventDef = mutatedRelevantEvents.defs[eventDef.defId]
@@ -290,51 +276,12 @@ export class EventCopy extends Interaction {
     this.cleanup()
   }
 
-  // render a drag state on the next receivingCalendar
-  displayDrag(nextContext: CalendarContext | null, state: EventInteractionState) {
-    let initialContext = this.component.context
-    let prevContext = this.receivingContext
-
-    // does the previous calendar need to be cleared?
-    if (prevContext && prevContext !== nextContext) {
-      // does the initial calendar need to be cleared?
-      // if so, don't clear all the way. we still need to to hide the affectedEvents
-      if (prevContext === initialContext) {
-        prevContext.dispatch({
-          type: 'SET_EVENT_DRAG',
-          state: {
-            affectedEvents: state.affectedEvents,
-            mutatedEvents: createEmptyEventStore(),
-            isEvent: true
-          }
-        })
-
-        // completely clear the old calendar if it wasn't the initial
-      } else {
-        prevContext.dispatch({ type: 'UNSET_EVENT_DRAG' })
-      }
-    }
-
-    if (nextContext) {
-      nextContext.dispatch({ type: 'SET_EVENT_DRAG', state })
-    }
-  }
-
-  clearDrag() {
-    let initialCalendar = this.component.context
-    let { receivingContext } = this
-
-    if (receivingContext) {
-      receivingContext.dispatch({ type: 'UNSET_EVENT_DRAG' })
-    }
-
-    // the initial calendar might have an dummy drag state from displayDrag
-    if (initialCalendar !== receivingContext) {
-      initialCalendar.dispatch({ type: 'UNSET_EVENT_DRAG' })
-    }
-  }
-
   cleanup() { // reset all internal state
+    this.clean()
+    this.hitChecker.cleanup()
+  }
+
+  clean() {  // reset all internal state
     this.type = null
     this.subjectSeg = null
     this.isDragging = false
@@ -343,8 +290,6 @@ export class EventCopy extends Interaction {
     this.receivingContext = null
     this.validMutation = null
     this.mutatedRelevantEvents = null
-
-    this.hitDragging.cleanup()
   }
 
   cloneEvent() {
@@ -356,12 +301,12 @@ export class EventCopy extends Interaction {
 
     let timeZone = options.timeZone === 'local' || !options.timeZone ? Intl.DateTimeFormat().resolvedOptions().timeZone : options.timeZone
 
-    let { finalHit } = this.hitDragging
+    let { finalHit } = this.hitChecker
     let resourceId = finalHit.dateSpan.resourceId
 
     let newEvent: any = {
       ...this.eventRange.ui,
-      ...this.eventRange.def,
+      ...this.eventRange.def
     }
     // @ts-ignore
     newEvent.resourceId = resourceId
@@ -383,10 +328,10 @@ export class EventCopy extends Interaction {
   }
 }
 
-function computeEventMutation(hit0: Hit, hit1: Hit, massagers: eventDragMutationMassager[]): EventMutation {
+function computeEventMutation(hit0: Hit, hit1: Hit, massagers: eventDragMutationMassager[], subjectSeg: any): EventMutation {
   let dateSpan0 = hit0.dateSpan
   let dateSpan1 = hit1.dateSpan
-  let date0 = dateSpan0.range.start
+  let date0 = subjectSeg.start
   let date1 = dateSpan1.range.start
   let standardProps = {} as any
 
@@ -395,8 +340,6 @@ function computeEventMutation(hit0: Hit, hit1: Hit, massagers: eventDragMutation
     standardProps.hasEnd = hit1.context.options.allDayMaintainDuration
 
     if (dateSpan1.allDay) {
-      // means date1 is already start-of-day,
-      // but date0 needs to be converted
       date0 = startOfDay(date0)
     }
   }

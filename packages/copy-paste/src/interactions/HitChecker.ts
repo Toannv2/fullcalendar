@@ -1,13 +1,16 @@
 import {
-  Emitter, PointerDragEvent,
-  isDateSpansEqual,
   computeRect,
-  constrainPoint, intersectRects, getRectCenter, diffPoints, Point,
-  rangeContainsRange,
+  constrainPoint,
+  ElementDragging,
+  Emitter,
+  getRectCenter,
   Hit,
   InteractionSettingsStore,
+  intersectRects,
+  isDateSpansEqual,
   mapHash,
-  ElementDragging
+  PointerDragEvent,
+  rangeContainsRange
 } from '@fullcalendar/common'
 import { OffsetTracker } from '../OffsetTracker'
 import { FeaturefulElementCopy } from '../dnd/FeaturefulElementCopy'
@@ -24,9 +27,7 @@ export class HitChecker {
   // internal state
   offsetTrackers: { [componentUid: string]: OffsetTracker }
   initialHit: Hit | null = null
-  movingHit: Hit | null = null
   finalHit: Hit | null = null // won't ever be populated if shouldIgnoreMove
-  coordAdjust?: Point
 
   constructor(dragging: FeaturefulElementCopy, droppableStore: InteractionSettingsStore) {
     this.droppableStore = droppableStore
@@ -58,62 +59,33 @@ export class HitChecker {
   }
 
   handlePaste = (ev: PointerDragEvent) => {
-    if (!this.coordAdjust) return
+    if (!this.initialHit) return
 
-    let hit = this.queryHitForOffset(ev.pageX, ev.pageY)
+    this.finalHit = this.queryHitForOffset(ev.pageX, ev.pageY)
 
-    if (!isHitsEqual(this.movingHit, hit)) {
-      this.movingHit = hit
-    }
-
-    this.finalHit = this.movingHit
-    this.movingHit = null
-    this.emitter.trigger('hitupdate', hit, true, ev)
+    if (!this.finalHit) return
 
     this.emitter.trigger('paste', ev)
   }
 
   prevHandle = (ev: PointerDragEvent) => {
-    this.coordAdjust = null
     this.initialHit = null
-    this.movingHit = null
     this.finalHit = null
     this.prepareHits()
     this.processFirstCoord(ev)
   }
 
   processFirstCoord(ev: PointerDragEvent) {
-    let origPoint = { left: ev.pageX, top: ev.pageY }
-
-    // @ts-ignore
-    // let rect = ev.subjectEl.getBoundingClientRect()
-    // let origPoint = { left: Math.ceil(window.pageXOffset + rect.left), top: Math.ceil(window.pageYOffset + rect.top) }
-
-    let adjustedPoint = origPoint
+    let adjustedPoint = { left: ev.pageX, top: ev.pageY }
     let subjectEl: any = ev.subjectEl
     let subjectRect
 
-    if (subjectEl instanceof HTMLElement) { // i.e. not a Document/ShadowRoot
+    if (subjectEl instanceof HTMLElement) {
       subjectRect = computeRect(subjectEl)
       adjustedPoint = constrainPoint(adjustedPoint, subjectRect)
     }
 
-    let initialHit: any = this.initialHit = this.queryHitForOffset(adjustedPoint.left, adjustedPoint.top)
-
-    if (initialHit) {
-      // initialHit.dateSpan.start = subjectEl.fcSeg.start
-      // initialHit.dateSpan.end = subjectEl.fcSeg.end
-      if (this.useSubjectCenter && subjectRect) {
-        let slicedSubjectRect = intersectRects(subjectRect, initialHit.rect)
-        if (slicedSubjectRect) {
-          adjustedPoint = getRectCenter(slicedSubjectRect)
-        }
-      }
-
-      this.coordAdjust = diffPoints(adjustedPoint, origPoint)
-    } else {
-      // this.coordAdjust = { left: 0, top: 0 }
-    }
+    this.initialHit = this.queryHitForOffset(adjustedPoint.left, adjustedPoint.top)
   }
 
   prepareHits() {
@@ -185,7 +157,8 @@ export class HitChecker {
   }
 
   cleanup = () => {
-    this.coordAdjust = null
+    this.initialHit = null
+    this.finalHit = null
   }
 }
 

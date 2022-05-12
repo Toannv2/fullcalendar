@@ -9,7 +9,7 @@ const KEY_X = 'x'
 
 const allowKeyboard = [KEY_META, KEY_C, KEY_V, KEY_D, KEY_X]
 
-const CONTAINER_CLASS = '.fc-timeline, .fc-timegrid'
+const CONTAINER_CLASS = '.fc-timeline-body, .fc-timegrid-body, .fc-daygrid-body'
 
 export class PointerTracking {
   containerEl: EventTarget

@@ -311,7 +311,7 @@ export class EventCopy extends Interaction {
 function computeEventMutation(hit0: Hit, hit1: Hit, massagers: eventDragMutationMassager[], subjectSeg: any): EventMutation {
   let dateSpan0 = hit0.dateSpan
   let dateSpan1 = hit1.dateSpan
-  let date0 = subjectSeg.start
+  let date0 = subjectSeg.start || subjectSeg?.eventRange?.range?.start || dateSpan0.range.start
   let date1 = dateSpan1.range.start
   let standardProps = {} as any
 

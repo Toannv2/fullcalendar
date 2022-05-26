@@ -14,6 +14,8 @@ import { OffsetTracker } from '../OffsetTracker'
 import { FeaturefulElementCopy } from '../dnd/FeaturefulElementCopy'
 
 export class HitChecker {
+  type: string = null
+
   droppableStore: InteractionSettingsStore
   dragging: ElementDragging
   emitter: Emitter<any>
@@ -25,7 +27,8 @@ export class HitChecker {
   // internal state
   offsetTrackers: { [componentUid: string]: OffsetTracker }
   initialHit: Hit | null = null
-  finalHit: Hit | null = null // won't ever be populated if shouldIgnoreMove
+  finalHit: Hit | null = null
+  movingHit: Hit | null = null
 
   constructor(dragging: FeaturefulElementCopy, droppableStore: InteractionSettingsStore) {
     this.droppableStore = droppableStore
@@ -34,6 +37,7 @@ export class HitChecker {
     dragging.emitter.on('pointer-cut', this.handleCut)
     dragging.emitter.on('pointer-duplicate', this.handleDuplicate)
     dragging.emitter.on('pointer-paste', this.handlePaste)
+    dragging.emitter.on('mousemove', this.handleMove)
     dragging.emitter.on('cleanup', this.cleanup)
 
     // @ts-ignore
@@ -41,19 +45,38 @@ export class HitChecker {
     this.emitter = new Emitter()
   }
 
+  checkValidBehavior = () => {
+    return this.type !== null;
+  }
+
   handleCopy = (ev: PointerDragEvent) => {
+    this.type = 'copy'
     this.prevHandle(ev)
     this.emitter.trigger('pointer-copy', ev)
   }
 
   handleCut = (ev: PointerDragEvent) => {
+    this.type = 'cut'
     this.prevHandle(ev)
     this.emitter.trigger('pointer-cut', ev)
   }
 
   handleDuplicate = (ev: PointerDragEvent) => {
+    this.type = 'duplicate'
     this.prevHandle(ev)
     this.emitter.trigger('pointer-duplicate', ev)
+  }
+
+  handleMove = (ev: PointerDragEvent, forceHandle?: boolean) => {
+    if (!this.checkValidBehavior())
+      return;
+
+    let hit = this.queryHitForOffset(ev.pageX, ev.pageY)
+
+    if (forceHandle || !isHitsEqual(this.movingHit, hit)) {
+      this.movingHit = hit
+      this.emitter.trigger('hitupdate', hit, false, ev)
+    }
   }
 
   handlePaste = (ev: PointerDragEvent) => {
@@ -157,6 +180,8 @@ export class HitChecker {
   cleanup = () => {
     this.initialHit = null
     this.finalHit = null
+    this.type = null;
+    this.emitter.trigger('cleanup', true)
   }
 }
 

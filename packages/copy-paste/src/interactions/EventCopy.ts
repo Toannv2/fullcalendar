@@ -15,7 +15,7 @@ import {
   EventChangeArg,
   buildEventApis,
   EventRemoveArg,
-  isInteractionValid
+  isInteractionValid, getElRoot
 } from '@fullcalendar/common'
 import { __assign } from 'tslib'
 import { HitChecker } from './HitChecker'
@@ -33,7 +33,6 @@ export class EventCopy extends Interaction {
   // internal state
   subjectEl: HTMLElement | null = null
   subjectSeg: Seg | null = null // the seg being selected/dragged
-  isDragging: boolean = false
   eventRange: EventRenderRange | null = null
   relevantEvents: EventStore | null = null // the events being dragged
   receivingContext: CalendarContext | null = null
@@ -52,7 +51,9 @@ export class EventCopy extends Interaction {
     hitChecker.emitter.on('pointer-copy', this.handleCopy)
     hitChecker.emitter.on('pointer-cut', this.handleCut)
     hitChecker.emitter.on('pointer-duplicate', this.handleDuplicate)
+    hitChecker.emitter.on('hitupdate', this.handleHitUpdate)
     hitChecker.emitter.on('paste', this.handlePaste)
+    hitChecker.emitter.on('cleanup', this.cleanup)
   }
 
   destroy() {
@@ -61,12 +62,14 @@ export class EventCopy extends Interaction {
 
   handleCopy = (ev: PointerDragEvent) => {
     this.type = 'copy'
-    this.handleInputEvent(ev)
+    this.handleInputEvent(ev);
+    this.copyToClipboard();
   }
 
   handleCut = (ev: PointerDragEvent) => {
     this.type = 'cut'
     this.handleInputEvent(ev)
+    this.copyToClipboard();
   }
 
   handleDuplicate = (ev: PointerDragEvent) => {
@@ -88,13 +91,19 @@ export class EventCopy extends Interaction {
     )
   }
 
+  copyToClipboard = () => {
+    const initialContext = this.component.context
+    const eventDef = this.eventRange!.def
+    const eventInstance = this.eventRange!.instance
+    const eventApi = new EventApi(initialContext, eventDef, eventInstance)
+    navigator.clipboard.writeText(JSON.stringify(eventApi.toJSON()));
+  }
+
   handleHitUpdate = (hit: Hit | null, isFinal: boolean) => {
     if (!this.type || !hit) return
 
     let relevantEvents = this.relevantEvents!
     let initialHit = this.hitChecker.initialHit!
-    // @ts-ignore
-    let initialContext = this.component.context
 
     // states based on new hit
     let receivingContext: CalendarContext | null = null
@@ -108,32 +117,27 @@ export class EventCopy extends Interaction {
     }
 
     receivingContext = hit.context
-    let receivingOptions = receivingContext.options
+    mutation = computeEventMutation(initialHit, hit, receivingContext.getCurrentData().pluginHooks.eventDragMutationMassagers, this.subjectSeg)
 
-    if (
-      initialContext === receivingContext ||
-      (receivingOptions.editable && receivingOptions.droppable)
-    ) {
-      mutation = computeEventMutation(initialHit, hit, receivingContext.getCurrentData().pluginHooks.eventDragMutationMassagers, this.subjectSeg)
+    if (mutation && relevantEvents) {
+      mutatedRelevantEvents = applyMutationToEventStore(
+        relevantEvents,
+        receivingContext.getCurrentData().eventUiBases,
+        mutation,
+        receivingContext
+      )
+      interaction.mutatedEvents = mutatedRelevantEvents
 
-      if (mutation && relevantEvents) {
-        mutatedRelevantEvents = applyMutationToEventStore(
-          relevantEvents,
-          receivingContext.getCurrentData().eventUiBases,
-          mutation,
-          receivingContext
-        )
-        interaction.mutatedEvents = mutatedRelevantEvents
-
-        if (!isInteractionValid(interaction, hit.dateProfile, receivingContext)) {
-          isInvalid = true
-          mutation = null
-          mutatedRelevantEvents = null
-          interaction.mutatedEvents = createEmptyEventStore()
-        }
+      if (!isInteractionValid(interaction, hit.dateProfile, receivingContext)) {
+        isInvalid = true
+        mutation = null
+        mutatedRelevantEvents = null
+        interaction.mutatedEvents = createEmptyEventStore()
       }
-    } else {
-      receivingContext = null
+    }
+
+    if (this.type === 'cut') {
+      this.displayDrag(receivingContext, interaction)
     }
 
     if (!isInvalid) {
@@ -142,9 +146,56 @@ export class EventCopy extends Interaction {
       disableCursor()
     }
 
+    this.manager.setMirrorIsVisible(
+      !hit || !getElRoot(this.subjectEl).querySelector('.fc-event-mirror') // TODO: turn className into constant
+    )
+
     this.receivingContext = receivingContext
     this.validMutation = mutation
     this.mutatedRelevantEvents = mutatedRelevantEvents
+  }
+
+  displayDrag(nextContext: CalendarContext | null, state: EventInteractionState) {
+    let initialContext = this.component.context
+    let prevContext = this.receivingContext
+
+    // does the previous calendar need to be cleared?
+    if (prevContext && prevContext !== nextContext) {
+      // does the initial calendar need to be cleared?
+      // if so, don't clear all the way. we still need to to hide the affectedEvents
+      if (prevContext === initialContext) {
+        prevContext.dispatch({
+          type: 'SET_EVENT_DRAG',
+          state: {
+            affectedEvents: state.affectedEvents,
+            mutatedEvents: createEmptyEventStore(),
+            isEvent: true
+          }
+        })
+
+        // completely clear the old calendar if it wasn't the initial
+      } else {
+        prevContext.dispatch({ type: 'UNSET_EVENT_DRAG' })
+      }
+    }
+
+    if (nextContext) {
+      nextContext.dispatch({ type: 'SET_EVENT_DRAG', state })
+    }
+  }
+
+  clearDrag() {
+    let initialCalendar = this.component.context
+    let { receivingContext } = this
+
+    if (receivingContext) {
+      receivingContext.dispatch({ type: 'UNSET_EVENT_DRAG' })
+    }
+
+    // the initial calendar might have an dummy drag state from displayDrag
+    if (initialCalendar !== receivingContext) {
+      initialCalendar.dispatch({ type: 'UNSET_EVENT_DRAG' })
+    }
   }
 
   handlePaste = (ev: PointerDragEvent) => {
@@ -262,12 +313,10 @@ export class EventCopy extends Interaction {
     this.cleanup()
   }
 
-  cleanup() { // reset all internal state
-    this.clean()
-    this.hitChecker.cleanup()
-  }
-
-  clean() {  // reset all internal state
+  cleanup = () => { // reset all internal state
+    if (this.type === 'cut') {
+      this.clearDrag()
+    }
     this.type = null
     this.subjectSeg = null
     this.eventRange = null
@@ -278,7 +327,14 @@ export class EventCopy extends Interaction {
   }
 
   cloneEvent() {
+    let initialContext = this.component.context
+    let eventDef = this.eventRange!.def
     let eventInstance = this.eventRange!.instance
+    let newEventApi = new EventApi(
+      initialContext,
+      this.mutatedRelevantEvents.defs[eventDef.defId],
+      eventInstance ? this.mutatedRelevantEvents.instances[eventInstance.instanceId] : null
+    )
 
     let { finalHit } = this.hitChecker
     let resourceId = finalHit.dateSpan.resourceId
@@ -297,6 +353,8 @@ export class EventCopy extends Interaction {
     delete newEvent.extendedProps
     delete newEvent.recurringDef
     delete newEvent.sourceId
+
+    newEvent.allDay = newEventApi.allDay
 
     let offset = new Date().getTimezoneOffset() * 60 * 1000
 

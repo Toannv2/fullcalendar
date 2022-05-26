@@ -6,6 +6,9 @@ const KEY_C = 'c'
 const KEY_V = 'v'
 const KEY_D = 'd'
 const KEY_X = 'x'
+const KEY_Z = 'z'
+const KEY_ESCAPE = 'Escape'
+const KEY_ENTER = 'Enter'
 
 const allowKeyboard = [KEY_META, KEY_C, KEY_V, KEY_D, KEY_X]
 
@@ -26,8 +29,6 @@ export class PointerTracking {
   // options that can be directly assigned by caller
   selector: string = '' // will cause subjectEl in all emitted events to be this element
   handleSelector: string = ''
-  shouldIgnoreMove: boolean = false
-  shouldWatchScroll: boolean = true // for simulating pointermove on scroll
 
   // internal states
   origPageX: number
@@ -60,8 +61,10 @@ export class PointerTracking {
     return false
   }
 
-  cleanup() {
+  cleanup = () => {
     this.subjectEl = null
+    this.listKey = {}
+    this.emitter.trigger('cleanup', true)
   }
 
   querySubjectEl(ev: UIEvent): HTMLElement {
@@ -103,15 +106,25 @@ export class PointerTracking {
 
   handleCopyPaste = (event: KeyboardEvent) => {
     // for MacOS or Window keyboard
-    if (this.lastPoint && (this.isMac && this.pressedMetaKey || !this.isMac && event.ctrlKey)) {
-      if (event.key === KEY_C) {
-        this.handleCopy()
-      } else if (event.key === KEY_V) {
-        this.handlePaste()
-      } else if (event.key === KEY_X) {
-        this.handleCut()
-      } else if (event.key === KEY_D) {
-        this.handleDuplicate()
+    if (this.lastPoint) {
+      if (event.key === KEY_ENTER) {
+        return this.handlePaste()
+      } else if (event.key === KEY_ESCAPE) {
+        return this.cleanup()
+      }
+
+      if ((this.isMac && this.pressedMetaKey || !this.isMac && event.ctrlKey)) {
+        if (event.key === KEY_C) {
+          this.handleCopy()
+        } else if (event.key === KEY_V) {
+          this.handlePaste()
+        } else if (event.key === KEY_X) {
+          this.handleCut()
+        } else if (event.key === KEY_D) {
+          this.handleDuplicate()
+        } else if (event.key === KEY_Z) {
+          this.handleUndo()
+        }
       }
     }
   }
@@ -122,12 +135,12 @@ export class PointerTracking {
       this.emitter.trigger('pointer-copy', pev)
     } else {
       this.cleanup()
-      this.emitter.trigger('cleanup', true)
     }
   }
 
   handlePaste = () => {
     this.emitter.trigger('pointer-paste', this.createEventFromMouse(this.lastPoint))
+    this.cleanup()
   }
 
   handleCut = () => {
@@ -136,7 +149,6 @@ export class PointerTracking {
       this.emitter.trigger('pointer-cut', pev)
     } else {
       this.cleanup()
-      this.emitter.trigger('cleanup', true)
     }
   }
 
@@ -144,8 +156,13 @@ export class PointerTracking {
     this.emitter.trigger('pointer-duplicate', this.lastPoint)
   }
 
+  handleUndo = () => {
+    //
+  }
+
   handleMouseMove = (ev: MouseEvent) => {
     this.lastPoint = ev
+    this.emitter.trigger('mousemove', this.createEventFromMouse(ev, true))
   }
 
   // Event Normalization

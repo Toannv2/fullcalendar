@@ -19,6 +19,7 @@ export class ElementMirror {
   parentNode: HTMLElement = document.body // HIGHLY SUGGESTED to set this to sidestep ShadowDOM issues
   zIndex: number = 9999
   revertDuration: number = 0
+  mirror: unknown
 
   start(sourceEl: HTMLElement, pageX: number, pageY: number) {
     this.sourceEl = sourceEl

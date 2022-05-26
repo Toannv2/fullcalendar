@@ -1,27 +1,19 @@
 import {
   PointerDragEvent,
-  // preventSelection,
   allowSelection,
-  // preventContextMenu,
-  allowContextMenu, Emitter
+  allowContextMenu, Emitter, preventSelection, preventContextMenu
 } from '@fullcalendar/common'
-// import { ElementMirror } from './ElementMirror'
-// import { AutoScroller } from './AutoScroller'
 import { PointerTracking } from '../interactions/PointerTracking'
+import { ElementMirror } from './ElementMirror'
 
-/*
-Monitors dragging on an element. Has a number of high-level features:
-- minimum distance required before dragging
-- minimum wait time ("delay") before dragging
-- a mirror element that follows the pointer
-*/
 export class FeaturefulElementCopy {
+  mirror: ElementMirror
   pointer: PointerTracking
+
+  type: string = null
 
   emitter: Emitter<any>
 
-  // options that can be directly set by caller
-  // the caller can also set the PointerDragging's options as well
   delay: number | null = null
   minDistance: number = 0
   touchScrollAllowed: boolean = true // prevents drag from starting and blocks scrolling during drag
@@ -39,12 +31,14 @@ export class FeaturefulElementCopy {
     this.containerEl = containerEl
 
     this.emitter = new Emitter()
+    this.mirror = new ElementMirror()
 
     let pointer = this.pointer = new PointerTracking(containerEl)
     pointer.emitter.on('pointer-copy', this.onPointerCopy)
     pointer.emitter.on('pointer-cut', this.onPointerCut)
     pointer.emitter.on('pointer-duplicate', this.onPointerDuplicate)
     pointer.emitter.on('pointer-paste', this.onPointerPaste)
+    pointer.emitter.on('mousemove', this.onMousemove)
     pointer.emitter.on('cleanup', this.cleanup)
 
     if (selector) {
@@ -57,25 +51,62 @@ export class FeaturefulElementCopy {
   }
 
   onPointerCopy = (ev: PointerDragEvent) => {
+    this.type = 'copy'
     this.emitter.trigger('pointer-copy', ev)
+    this.onPointerDown(ev)
   }
 
   onPointerCut = (ev: PointerDragEvent) => {
+    this.type = 'cut'
     this.emitter.trigger('pointer-cut', ev)
+    this.onPointerDown(ev)
   }
 
   onPointerDuplicate = (ev: PointerDragEvent) => {
+    this.type = 'duplicate'
     this.emitter.trigger('pointer-duplicate', ev)
   }
 
   onPointerPaste = (ev: PointerDragEvent) => {
+    if (this.type === null)
+      return;
+
     allowSelection(document.body)
     allowContextMenu(document.body)
 
     this.emitter.trigger('pointer-paste', ev)
   }
 
+  onPointerDown = (ev: PointerDragEvent) => {
+    preventSelection(document.body)
+    preventContextMenu(document.body)
+
+    this.mirror.setIsVisible(true) // reset. caller must set-visible
+    this.mirror.start(ev.subjectEl as HTMLElement, ev.pageX, ev.pageY) // must happen on first pointer down
+
+  }
+
+  onMousemove = (ev: PointerDragEvent) => {
+    if (this.type === null)
+      return
+
+    this.emitter.trigger('mousemove', ev)
+
+    // if (ev.origEvent.type !== 'scroll') {
+      this.mirror.handleMove(ev.pageX, ev.pageY)
+    // }
+  }
+
+  setMirrorIsVisible(bool: boolean) {
+    this.mirror.setIsVisible(bool)
+  }
+
   cleanup = () => {
+    this.type = null
+    this.mirror.stop(
+      false, () => {
+      }
+    )
     this.emitter.trigger('cleanup', true)
   }
 }

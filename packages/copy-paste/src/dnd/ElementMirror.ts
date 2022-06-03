@@ -6,9 +6,10 @@ The moving element is a clone of some other element.
 Must call start + handleMove + stop.
 */
 export class ElementMirror {
-  pageX: number;
-  pageY: number;
-  position = 'fixed'
+  pageX: number = 0
+  pageY: number = 0
+  scrollLeft: number = 0
+  scrollTop: number = 0
   isVisible: boolean = false // must be explicitly enabled
   origScreenX?: number
   origScreenY?: number
@@ -133,7 +134,7 @@ export class ElementMirror {
       mirrorEl.classList.add('fc-event-dragging')
 
       applyStyle(mirrorEl, {
-        position: this.position,
+        position: 'fixed',
         zIndex: this.zIndex,
         visibility: '', // in case original element was hidden by the drag effect
         boxSizing: 'border-box', // for easy width/height

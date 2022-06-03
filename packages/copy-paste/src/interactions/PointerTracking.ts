@@ -36,7 +36,7 @@ export class PointerTracking {
     this.containerEl = containerEl
     this.emitter = new Emitter()
 
-    // window.addEventListener('scroll', this.handleScroll)
+    window.addEventListener('scroll', this.handleScroll)
     // @ts-ignore
     containerEl.parentElement.addEventListener('scroll', this.handleScroll)
     document.body.addEventListener('mousedown', this.handleMouseDown, false)
@@ -46,7 +46,7 @@ export class PointerTracking {
   }
 
   destroy() {
-    // window.removeEventListener('scroll', this.handleScroll)
+    window.removeEventListener('scroll', this.handleScroll)
     // @ts-ignore
     this.containerEl.parentElement.removeEventListener('scroll', this.handleScroll)
     document.body.removeEventListener('mousedown', this.handleMouseDown, false)

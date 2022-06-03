@@ -67,14 +67,22 @@ export class FeaturefulElementCopy {
     const parentElement = this.containerEl.parentElement
 
     this.mirrorStatic.handleMove(
-      this.mirrorStatic.pageX - parentElement.scrollLeft,
-      this.mirrorStatic.pageY - parentElement.scrollTop)
+      this.mirrorStatic.pageX + this.mirrorStatic.scrollLeft - parentElement.scrollLeft,
+      this.mirrorStatic.pageY + this.mirrorStatic.scrollTop - parentElement.scrollTop)
+
+    // this.mirrorStatic.handleMove(
+    //   this.mirrorStatic.pageX - parentElement.scrollLeft,
+    //   this.mirrorStatic.pageY - parentElement.scrollTop)
   }
 
   onPointerCopy = (ev: PointerDragEvent) => {
     this.type = 'copy'
     this.emitter.trigger('pointer-copy', ev)
     this.onPointerDown(ev)
+
+    const parentElement = this.containerEl.parentElement
+    this.mirrorStatic.scrollLeft = parentElement.scrollLeft;
+    this.mirrorStatic.scrollTop = parentElement.scrollTop;
   }
 
   onPointerCut = (ev: PointerDragEvent) => {

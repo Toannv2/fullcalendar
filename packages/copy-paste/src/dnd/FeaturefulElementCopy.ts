@@ -49,7 +49,6 @@ export class FeaturefulElementCopy {
     pointer.emitter.on('cleanup', this.cleanup)
 
     this.mirrorStatic.parentNode = containerEl
-    this.mirrorStatic.position = 'absolute'
 
     if (selector) {
       pointer.selector = selector

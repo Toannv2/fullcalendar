@@ -1,3 +1,5 @@
+import './main.css'
+
 import { createPlugin } from '@fullcalendar/common'
 import { CopyPasteInteract } from './interactions/CopyPasteInteract'
 import { EventCopy } from './interactions/EventCopy'

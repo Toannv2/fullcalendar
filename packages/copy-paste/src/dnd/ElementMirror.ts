@@ -10,6 +10,7 @@ export class ElementMirror {
   pageY: number = 0
   scrollLeft: number = 0
   scrollTop: number = 0
+  position = 'fixed'
   isVisible: boolean = false // must be explicitly enabled
   origScreenX?: number
   origScreenY?: number
@@ -32,14 +33,20 @@ export class ElementMirror {
     this.sourceElRect = this.sourceEl.getBoundingClientRect()
     this.origScreenX = pageX - window.pageXOffset
     this.origScreenY = pageY - window.pageYOffset
-    this.deltaX = 0
-    this.deltaY = 0
+    this.deltaX = this.position === 'fixed' ? 0 : pageX
+    this.deltaY = this.position === 'fixed' ? 0 : pageY
     this.updateElPosition()
   }
 
   handleMove(pageX: number, pageY: number) {
-    this.deltaX = (pageX - window.pageXOffset) - this.origScreenX!
-    this.deltaY = (pageY - window.pageYOffset) - this.origScreenY!
+    this.deltaX = this.position === 'fixed' ? (pageX - window.pageXOffset) - this.origScreenX! : pageX
+    this.deltaY = this.position === 'fixed' ? (pageY - window.pageYOffset) - this.origScreenY! : pageY
+    this.updateElPosition()
+  }
+
+  handleScroll(scrollX: number, scrollY: number) {
+    this.deltaX = this.pageX - scrollX
+    this.deltaY = this.pageY - scrollY
     this.updateElPosition()
   }
 
@@ -134,7 +141,7 @@ export class ElementMirror {
       mirrorEl.classList.add('fc-event-dragging')
 
       applyStyle(mirrorEl, {
-        position: 'fixed',
+        position: this.position,
         zIndex: this.zIndex,
         visibility: '', // in case original element was hidden by the drag effect
         boxSizing: 'border-box', // for easy width/height

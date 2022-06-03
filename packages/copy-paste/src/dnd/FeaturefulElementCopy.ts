@@ -93,7 +93,7 @@ export class FeaturefulElementCopy {
     this.emitter.trigger('mousemove', ev)
 
     // if (ev.origEvent.type !== 'scroll') {
-      this.mirror.handleMove(ev.pageX, ev.pageY)
+    //   this.mirror.handleMove(ev.pageX, ev.pageY)
     // }
   }
 

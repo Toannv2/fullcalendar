@@ -62,14 +62,14 @@ export class EventCopy extends Interaction {
 
   handleCopy = (ev: PointerDragEvent) => {
     this.type = 'copy'
-    this.handleInputEvent(ev);
-    this.copyToClipboard();
+    this.handleInputEvent(ev)
+    this.copyToClipboard()
   }
 
   handleCut = (ev: PointerDragEvent) => {
     this.type = 'cut'
     this.handleInputEvent(ev)
-    this.copyToClipboard();
+    this.copyToClipboard()
   }
 
   handleDuplicate = (ev: PointerDragEvent) => {
@@ -78,6 +78,7 @@ export class EventCopy extends Interaction {
   }
 
   handleInputEvent = (ev: PointerDragEvent) => {
+    this.clearDrag()
     let { component }: any = this
     let initialContext = component.context
     this.subjectEl = ev.subjectEl as HTMLElement
@@ -96,7 +97,7 @@ export class EventCopy extends Interaction {
     const eventDef = this.eventRange!.def
     const eventInstance = this.eventRange!.instance
     const eventApi = new EventApi(initialContext, eventDef, eventInstance)
-    navigator.clipboard.writeText(JSON.stringify(eventApi.toJSON()));
+    navigator.clipboard.writeText(JSON.stringify(eventApi.toJSON()))
   }
 
   handleHitUpdate = (hit: Hit | null, isFinal: boolean) => {
@@ -117,7 +118,7 @@ export class EventCopy extends Interaction {
     }
 
     receivingContext = hit.context
-    mutation = computeEventMutation(initialHit, hit, receivingContext.getCurrentData().pluginHooks.eventDragMutationMassagers, this.subjectSeg)
+    mutation = computeEventMutation(initialHit, hit, receivingContext.getCurrentData().pluginHooks.eventDragMutationMassagers)
 
     if (mutation && relevantEvents) {
       mutatedRelevantEvents = applyMutationToEventStore(
@@ -136,9 +137,7 @@ export class EventCopy extends Interaction {
       }
     }
 
-    if (this.type === 'cut') {
-      this.displayDrag(receivingContext, interaction)
-    }
+    this.displayDrag(receivingContext, interaction)
 
     if (!isInvalid) {
       enableCursor()
@@ -147,7 +146,7 @@ export class EventCopy extends Interaction {
     }
 
     this.manager.setMirrorIsVisible(
-      !hit || !getElRoot(this.subjectEl).querySelector('.fc-event-mirror') // TODO: turn className into constant
+      !hit || !getElRoot(this.subjectEl).querySelector('.fc-event-mirror') || this.type === 'copy'
     )
 
     this.receivingContext = receivingContext
@@ -314,9 +313,7 @@ export class EventCopy extends Interaction {
   }
 
   cleanup = () => { // reset all internal state
-    if (this.type === 'cut') {
-      this.clearDrag()
-    }
+    this.clearDrag()
     this.type = null
     this.subjectSeg = null
     this.eventRange = null
@@ -366,10 +363,10 @@ export class EventCopy extends Interaction {
   }
 }
 
-function computeEventMutation(hit0: Hit, hit1: Hit, massagers: eventDragMutationMassager[], subjectSeg: any): EventMutation {
+function computeEventMutation(hit0: Hit, hit1: Hit, massagers: eventDragMutationMassager[]): EventMutation {
   let dateSpan0 = hit0.dateSpan
   let dateSpan1 = hit1.dateSpan
-  let date0 = subjectSeg.start || subjectSeg?.eventRange?.range?.start || dateSpan0.range.start
+  let date0 = dateSpan0.range.start
   let date1 = dateSpan1.range.start
   let standardProps = {} as any
 
@@ -405,3 +402,44 @@ function computeEventMutation(hit0: Hit, hit1: Hit, massagers: eventDragMutation
 
   return mutation
 }
+
+//
+// function computeEventMutation(hit0: Hit, hit1: Hit, massagers: eventDragMutationMassager[], subjectSeg: any): EventMutation {
+//   let dateSpan0 = hit0.dateSpan
+//   let dateSpan1 = hit1.dateSpan
+//   let date0 = subjectSeg.start || subjectSeg?.eventRange?.range?.start || dateSpan0.range.start
+//   let date1 = dateSpan1.range.start
+//   let standardProps = {} as any
+//
+//   if (dateSpan0.allDay !== dateSpan1.allDay) {
+//     standardProps.allDay = dateSpan1.allDay
+//     standardProps.hasEnd = hit1.context.options.allDayMaintainDuration
+//
+//     if (dateSpan1.allDay) {
+//       date0 = startOfDay(date0)
+//     }
+//   }
+//
+//   let delta = diffDates(
+//     date0, date1,
+//     hit0.context.dateEnv,
+//     hit0.componentId === hit1.componentId ?
+//       hit0.largeUnit :
+//       null
+//   )
+//
+//   if (delta.milliseconds) { // has hours/minutes/seconds
+//     standardProps.allDay = false
+//   }
+//
+//   let mutation: EventMutation = {
+//     datesDelta: delta,
+//     standardProps
+//   }
+//
+//   for (let massager of massagers) {
+//     massager(mutation, hit0, hit1)
+//   }
+//
+//   return mutation
+// }

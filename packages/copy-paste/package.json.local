@@ -4,7 +4,7 @@
   "private": false,
   "title": "FullCalendar Copy-paste Plugin",
   "description": "Copy and paste events using the keyboard.",
-  "docs": "https://github.com/Toannv2/fullcalendar",
+  "docs": "https://github.com/toanS2/fullcalendar",
   "dependencies": {
     "@fullcalendar/common": "^5.11.0",
     "tslib": "^2.1.0"
@@ -18,8 +18,8 @@
   "bugs": "https://fullcalendar.io/reporting-bugs",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Toannv2/fullcalendar.git",
-    "homepage": "https://github.com/Toannv2/fullcalendar"
+    "url": "https://github.com/toanS2/fullcalendar.git",
+    "homepage": "https://github.com/toanS2/fullcalendar"
   },
   "license": "MIT",
   "author": {

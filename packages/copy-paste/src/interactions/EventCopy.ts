@@ -50,7 +50,6 @@ export class EventCopy extends Interaction {
     hitChecker.useSubjectCenter = settings.useEventCenter
     hitChecker.emitter.on('pointer-copy', this.handleCopy)
     hitChecker.emitter.on('pointer-cut', this.handleCut)
-    hitChecker.emitter.on('pointer-duplicate', this.handleDuplicate)
     hitChecker.emitter.on('hitupdate', this.handleHitUpdate)
     hitChecker.emitter.on('paste', this.handlePaste)
     hitChecker.emitter.on('cleanup', this.cleanup)
@@ -70,11 +69,6 @@ export class EventCopy extends Interaction {
     this.type = 'cut'
     this.handleInputEvent(ev)
     this.copyToClipboard()
-  }
-
-  handleDuplicate = (ev: PointerDragEvent) => {
-    this.type = 'duplicate'
-    this.handleInputEvent(ev)
   }
 
   handleInputEvent = (ev: PointerDragEvent) => {
@@ -146,8 +140,10 @@ export class EventCopy extends Interaction {
     }
 
     this.manager.setMirrorIsVisible(
-      !hit || !getElRoot(this.subjectEl).querySelector('.fc-event-mirror') || this.type === 'copy'
+      !hit || !getElRoot(this.subjectEl).querySelector('.fc-event-mirror')
     )
+
+    this.manager.mirrorStatic.setIsVisible(this.type === 'copy')
 
     this.receivingContext = receivingContext
     this.validMutation = mutation

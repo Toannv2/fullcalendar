@@ -1,6 +1,6 @@
 {
   "name": "fullcalendar-copy-paste",
-  "version": "0.0.6",
+  "version": "0.1.2",
   "private": false,
   "title": "FullCalendar Copy-paste Plugin",
   "description": "Copy and paste events using the keyboard.",
@@ -26,8 +26,5 @@
     "name": "Toan Nguyen",
     "email": "toannv@classfunc.com",
     "url": "https://github.com/toannguyen2/"
-  },
-  "devDependencies": {
-    "@fullcalendar/core-preact": "file:core-preact"
   }
 }

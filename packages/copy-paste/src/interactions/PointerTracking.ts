@@ -1,12 +1,10 @@
 import { elementClosest, Emitter, PointerDragEvent } from '@fullcalendar/common'
 
 const KEY_META = 'Meta'
-// const KEY_CONTROL = 'Control'
 const KEY_C = 'c'
 const KEY_V = 'v'
 const KEY_D = 'd'
 const KEY_X = 'x'
-const KEY_Z = 'z'
 const KEY_ESCAPE = 'Escape'
 const KEY_ENTER = 'Enter'
 
@@ -37,13 +35,15 @@ export class PointerTracking {
   constructor(containerEl: EventTarget) {
     this.containerEl = containerEl
     this.emitter = new Emitter()
-    document.body.addEventListener('mousemove', this.handleMouseMove)
+    document.body.addEventListener('mousedown', this.handleMouseDown, false)
+    document.body.addEventListener('mousemove', this.handleMouseMove, false)
     document.body.addEventListener('keydown', this.handleKeyDown, false)
     document.body.addEventListener('keyup', this.handleKeyUp, false)
   }
 
   destroy() {
-    document.body.removeEventListener('mousemove', this.handleMouseMove)
+    document.body.removeEventListener('mousedown', this.handleMouseDown, false)
+    document.body.removeEventListener('mousemove', this.handleMouseMove, false)
     document.body.removeEventListener('keydown', this.handleKeyDown, false)
     document.body.removeEventListener('keyup', this.handleKeyUp, false)
   }
@@ -72,6 +72,11 @@ export class PointerTracking {
       return elementClosest(ev.target as HTMLElement, this.selector)
     }
     return this.containerEl as HTMLElement
+  }
+
+  handleMouseDown = () => {
+    this.emitter.trigger('mousedown', this.createEventFromMouse(this.lastPoint))
+    this.cleanup()
   }
 
   // Keyboard
@@ -121,9 +126,8 @@ export class PointerTracking {
         } else if (event.key === KEY_X) {
           this.handleCut()
         } else if (event.key === KEY_D) {
+          event.preventDefault();
           this.handleDuplicate()
-        } else if (event.key === KEY_Z) {
-          this.handleUndo()
         }
       }
     }
@@ -153,11 +157,8 @@ export class PointerTracking {
   }
 
   handleDuplicate = () => {
-    this.emitter.trigger('pointer-duplicate', this.lastPoint)
-  }
-
-  handleUndo = () => {
-    //
+    this.handleCopy();
+    this.handlePaste();
   }
 
   handleMouseMove = (ev: MouseEvent) => {

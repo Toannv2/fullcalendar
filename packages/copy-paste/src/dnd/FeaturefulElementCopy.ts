@@ -8,6 +8,7 @@ import { ElementMirror } from './ElementMirror'
 
 export class FeaturefulElementCopy {
   mirror: ElementMirror
+  mirrorStatic: ElementMirror
   pointer: PointerTracking
 
   type: string = null
@@ -32,12 +33,13 @@ export class FeaturefulElementCopy {
 
     this.emitter = new Emitter()
     this.mirror = new ElementMirror()
+    this.mirrorStatic = new ElementMirror()
 
     let pointer = this.pointer = new PointerTracking(containerEl)
     pointer.emitter.on('pointer-copy', this.onPointerCopy)
     pointer.emitter.on('pointer-cut', this.onPointerCut)
-    pointer.emitter.on('pointer-duplicate', this.onPointerDuplicate)
     pointer.emitter.on('pointer-paste', this.onPointerPaste)
+    pointer.emitter.on('mousedown', this.onMousedown)
     pointer.emitter.on('mousemove', this.onMousemove)
     pointer.emitter.on('cleanup', this.cleanup)
 
@@ -62,14 +64,9 @@ export class FeaturefulElementCopy {
     this.onPointerDown(ev)
   }
 
-  onPointerDuplicate = (ev: PointerDragEvent) => {
-    this.type = 'duplicate'
-    this.emitter.trigger('pointer-duplicate', ev)
-  }
-
   onPointerPaste = (ev: PointerDragEvent) => {
     if (this.type === null)
-      return;
+      return
 
     allowSelection(document.body)
     allowContextMenu(document.body)
@@ -81,9 +78,21 @@ export class FeaturefulElementCopy {
     preventSelection(document.body)
     preventContextMenu(document.body)
 
-    this.mirror.setIsVisible(true) // reset. caller must set-visible
-    this.mirror.start(ev.subjectEl as HTMLElement, ev.pageX, ev.pageY) // must happen on first pointer down
+    this.mirror.setIsVisible(true)
+    this.mirror.start(ev.subjectEl as HTMLElement, ev.pageX, ev.pageY)
 
+    this.mirrorStatic.setIsVisible(true)
+    this.mirrorStatic.start(ev.subjectEl as HTMLElement, ev.pageX, ev.pageY)
+  }
+
+  onMousedown = (ev: PointerDragEvent) => {
+    if (this.type === null)
+      return
+
+    allowSelection(document.body)
+    allowContextMenu(document.body)
+
+    this.emitter.trigger('pointer-paste', ev)
   }
 
   onMousemove = (ev: PointerDragEvent) => {
@@ -93,7 +102,7 @@ export class FeaturefulElementCopy {
     this.emitter.trigger('mousemove', ev)
 
     // if (ev.origEvent.type !== 'scroll') {
-    //   this.mirror.handleMove(ev.pageX, ev.pageY)
+    this.mirror.handleMove(ev.pageX, ev.pageY)
     // }
   }
 
@@ -104,6 +113,10 @@ export class FeaturefulElementCopy {
   cleanup = () => {
     this.type = null
     this.mirror.stop(
+      false, () => {
+      }
+    )
+    this.mirrorStatic.stop(
       false, () => {
       }
     )

@@ -15,7 +15,7 @@ import {
   EventChangeArg,
   buildEventApis,
   EventRemoveArg,
-  isInteractionValid, getElRoot
+  isInteractionValid, getElRoot, elementClosest
 } from '@fullcalendar/common'
 import { __assign } from 'tslib'
 import { HitChecker } from './HitChecker'
@@ -73,7 +73,7 @@ export class EventCopy extends Interaction {
 
   handleInputEvent = (ev: PointerDragEvent) => {
     this.clearDrag()
-    let { component }: any = this
+    let { component, manager }: any = this
     let initialContext = component.context
     this.subjectEl = ev.subjectEl as HTMLElement
     let subjectSeg = this.subjectSeg = getElSeg(ev.subjectEl as HTMLElement)!
@@ -84,6 +84,19 @@ export class EventCopy extends Interaction {
       initialContext.getCurrentData().eventStore,
       eventInstanceId
     )
+
+    let origTarget = ev.origEvent.target as HTMLElement
+
+    let { mirror, mirrorStatic } = manager
+    let { options } = component.context
+    if (options.fixedMirrorParent) {
+      mirror.parentNode = mirrorStatic.parentNode = options.fixedMirrorParent
+      mirrorStatic.parentNode = options.fixedMirrorParent
+    } else {
+      mirror.parentNode = mirrorStatic.parentNode = elementClosest(origTarget, '.fc')
+    }
+
+    mirror.revertDuration = options.dragRevertDuration
   }
 
   copyToClipboard = () => {

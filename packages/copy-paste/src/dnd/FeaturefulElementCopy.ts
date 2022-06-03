@@ -5,11 +5,14 @@ import {
 } from '@fullcalendar/common'
 import { PointerTracking } from '../interactions/PointerTracking'
 import { ElementMirror } from './ElementMirror'
+import { AutoScroller } from './AutoScroller'
 
 export class FeaturefulElementCopy {
   mirror: ElementMirror
   mirrorStatic: ElementMirror
   pointer: PointerTracking
+
+  autoScroller: AutoScroller
 
   type: string = null
 
@@ -34,14 +37,19 @@ export class FeaturefulElementCopy {
     this.emitter = new Emitter()
     this.mirror = new ElementMirror()
     this.mirrorStatic = new ElementMirror()
+    this.autoScroller = new AutoScroller()
 
     let pointer = this.pointer = new PointerTracking(containerEl)
+    pointer.emitter.on('scroll', this.onScroll)
     pointer.emitter.on('pointer-copy', this.onPointerCopy)
     pointer.emitter.on('pointer-cut', this.onPointerCut)
     pointer.emitter.on('pointer-paste', this.onPointerPaste)
     pointer.emitter.on('mousedown', this.onMousedown)
     pointer.emitter.on('mousemove', this.onMousemove)
     pointer.emitter.on('cleanup', this.cleanup)
+
+    this.mirrorStatic.parentNode = containerEl
+    this.mirrorStatic.position = 'absolute'
 
     if (selector) {
       pointer.selector = selector
@@ -50,6 +58,17 @@ export class FeaturefulElementCopy {
 
   destroy() {
     this.pointer.destroy()
+  }
+
+  onScroll = () => {
+    if (this.type !== 'copy')
+      return
+
+    const parentElement = this.containerEl.parentElement
+
+    this.mirrorStatic.handleMove(
+      this.mirrorStatic.pageX - parentElement.scrollLeft,
+      this.mirrorStatic.pageY - parentElement.scrollTop)
   }
 
   onPointerCopy = (ev: PointerDragEvent) => {

@@ -35,6 +35,10 @@ export class PointerTracking {
   constructor(containerEl: EventTarget) {
     this.containerEl = containerEl
     this.emitter = new Emitter()
+
+    // window.addEventListener('scroll', this.handleScroll)
+    // @ts-ignore
+    containerEl.parentElement.addEventListener('scroll', this.handleScroll)
     document.body.addEventListener('mousedown', this.handleMouseDown, false)
     document.body.addEventListener('mousemove', this.handleMouseMove, false)
     document.body.addEventListener('keydown', this.handleKeyDown, false)
@@ -42,6 +46,9 @@ export class PointerTracking {
   }
 
   destroy() {
+    // window.removeEventListener('scroll', this.handleScroll)
+    // @ts-ignore
+    this.containerEl.parentElement.removeEventListener('scroll', this.handleScroll)
     document.body.removeEventListener('mousedown', this.handleMouseDown, false)
     document.body.removeEventListener('mousemove', this.handleMouseMove, false)
     document.body.removeEventListener('keydown', this.handleKeyDown, false)
@@ -74,9 +81,14 @@ export class PointerTracking {
     return this.containerEl as HTMLElement
   }
 
-  handleMouseDown = () => {
+  handleScroll = (event) => {
+    this.emitter.trigger('scroll', true)
+  }
+
+  handleMouseDown = (event) => {
+    event.preventDefault()
     this.emitter.trigger('mousedown', this.createEventFromMouse(this.lastPoint))
-    this.cleanup()
+    setTimeout(() => this.cleanup(), 50)
   }
 
   // Keyboard
@@ -115,10 +127,11 @@ export class PointerTracking {
       if (event.key === KEY_ENTER) {
         return this.handlePaste()
       } else if (event.key === KEY_ESCAPE) {
-        return this.cleanup()
+        return setTimeout(() => this.cleanup(), 50)
       }
 
       if ((this.isMac && this.pressedMetaKey || !this.isMac && event.ctrlKey)) {
+        event.preventDefault()
         if (event.key === KEY_C) {
           this.handleCopy()
         } else if (event.key === KEY_V) {
@@ -126,7 +139,6 @@ export class PointerTracking {
         } else if (event.key === KEY_X) {
           this.handleCut()
         } else if (event.key === KEY_D) {
-          event.preventDefault();
           this.handleDuplicate()
         }
       }
@@ -138,13 +150,13 @@ export class PointerTracking {
       let pev = this.createEventFromMouse(this.lastPoint, true)
       this.emitter.trigger('pointer-copy', pev)
     } else {
-      this.cleanup()
+      setTimeout(() => this.cleanup(), 50)
     }
   }
 
   handlePaste = () => {
     this.emitter.trigger('pointer-paste', this.createEventFromMouse(this.lastPoint))
-    this.cleanup()
+    setTimeout(() => this.cleanup(), 50)
   }
 
   handleCut = () => {
@@ -152,13 +164,13 @@ export class PointerTracking {
       let pev = this.createEventFromMouse(this.lastPoint, true)
       this.emitter.trigger('pointer-cut', pev)
     } else {
-      this.cleanup()
+      setTimeout(() => this.cleanup(), 50)
     }
   }
 
   handleDuplicate = () => {
-    this.handleCopy();
-    this.handlePaste();
+    this.handleCopy()
+    this.handlePaste()
   }
 
   handleMouseMove = (ev: MouseEvent) => {

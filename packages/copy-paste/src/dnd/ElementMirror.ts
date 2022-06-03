@@ -6,6 +6,9 @@ The moving element is a clone of some other element.
 Must call start + handleMove + stop.
 */
 export class ElementMirror {
+  pageX: number;
+  pageY: number;
+  position = 'fixed'
   isVisible: boolean = false // must be explicitly enabled
   origScreenX?: number
   origScreenY?: number
@@ -23,6 +26,8 @@ export class ElementMirror {
 
   start(sourceEl: HTMLElement, pageX: number, pageY: number) {
     this.sourceEl = sourceEl
+    this.pageX = pageX
+    this.pageY = pageY
     this.sourceElRect = this.sourceEl.getBoundingClientRect()
     this.origScreenX = pageX - window.pageXOffset
     this.origScreenY = pageY - window.pageYOffset
@@ -87,7 +92,7 @@ export class ElementMirror {
 
     applyStyle(mirrorEl, {
       left: finalSourceElRect.left,
-      top: finalSourceElRect.top,
+      top: finalSourceElRect.top
     })
 
     whenTransitionDone(mirrorEl, () => {
@@ -109,7 +114,7 @@ export class ElementMirror {
     if (this.sourceEl && this.isVisible) {
       applyStyle(this.getMirrorEl(), {
         left: this.sourceElRect!.left + this.deltaX!,
-        top: this.sourceElRect!.top + this.deltaY!,
+        top: this.sourceElRect!.top + this.deltaY!
       })
     }
   }
@@ -128,7 +133,7 @@ export class ElementMirror {
       mirrorEl.classList.add('fc-event-dragging')
 
       applyStyle(mirrorEl, {
-        position: 'fixed',
+        position: this.position,
         zIndex: this.zIndex,
         visibility: '', // in case original element was hidden by the drag effect
         boxSizing: 'border-box', // for easy width/height
@@ -136,7 +141,7 @@ export class ElementMirror {
         height: sourceElRect.bottom - sourceElRect.top, // explicit width in case there was a 'bottom' value
         right: 'auto', // erase and set width instead
         bottom: 'auto', // erase and set height instead
-        margin: 0,
+        margin: 0
       })
 
       this.parentNode.appendChild(mirrorEl)

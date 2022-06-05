@@ -1,9 +1,9 @@
 {
   "name": "fullcalendar-copy-paste",
-  "version": "0.1.2",
+  "version": "0.1.8",
   "private": false,
   "title": "FullCalendar Copy-paste Plugin",
-  "description": "Copy and paste events using the keyboard.",
+  "description": "The Plugin expands for FullCalendar, which aims to add copy and paste features using shortcuts.",
   "docs": "https://github.com/toanS2/fullcalendar",
   "dependencies": {
     "@fullcalendar/common": "^5.11.0",
@@ -21,6 +21,14 @@
     "url": "https://github.com/toanS2/fullcalendar.git",
     "homepage": "https://github.com/toanS2/fullcalendar"
   },
+  "keywords": [
+    "fullcalendar",
+    "fullcalendar-copy",
+    "fullcalendar-copy-paste",
+    "copy",
+    "paste",
+    "copy-paste"
+  ],
   "license": "MIT",
   "author": {
     "name": "Toan Nguyen",

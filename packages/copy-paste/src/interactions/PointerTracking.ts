@@ -84,7 +84,6 @@ export class PointerTracking {
   }
 
   handleMouseDown = (event) => {
-    event.preventDefault()
     this.emitter.trigger('mousedown', this.createEventFromMouse(this.lastPoint))
     setTimeout(() => this.cleanup(), 50)
   }
@@ -129,7 +128,6 @@ export class PointerTracking {
       }
 
       if ((this.isMac && this.pressedMetaKey || !this.isMac && event.ctrlKey)) {
-        event.preventDefault()
         if (event.key === KEY_C) {
           this.handleCopy()
         } else if (event.key === KEY_V) {
@@ -137,6 +135,7 @@ export class PointerTracking {
         } else if (event.key === KEY_X) {
           this.handleCut()
         } else if (event.key === KEY_D) {
+          event.preventDefault()
           this.handleDuplicate()
         }
       }

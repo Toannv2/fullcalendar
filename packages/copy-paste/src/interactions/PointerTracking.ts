@@ -1,4 +1,5 @@
 import { elementClosest, Emitter, PointerDragEvent } from '@fullcalendar/common'
+import { TYPE_EVENT } from './EventCopy'
 
 const KEY_META = 'Meta'
 const KEY_C = 'c'
@@ -19,6 +20,8 @@ export class PointerTracking {
 
   pressedMetaKey: boolean = false
   listKey = {}
+
+  type: TYPE_EVENT = TYPE_EVENT.NONE
 
   lastPoint = null
 
@@ -67,6 +70,7 @@ export class PointerTracking {
   }
 
   cleanup = () => {
+    this.type = TYPE_EVENT.NONE
     this.subjectEl = null
     this.listKey = {}
     this.emitter.trigger('cleanup', true)
@@ -84,7 +88,9 @@ export class PointerTracking {
   }
 
   handleMouseDown = (event) => {
-    this.emitter.trigger('mousedown', this.createEventFromMouse(this.lastPoint))
+    if (this.lastPoint && this.type !== TYPE_EVENT.NONE) {
+      this.emitter.trigger('mousedown', this.createEventFromMouse(this.lastPoint))
+    }
     setTimeout(() => this.cleanup(), 50)
   }
 
@@ -124,7 +130,7 @@ export class PointerTracking {
       if (event.key === KEY_ENTER) {
         return this.handlePaste()
       } else if (event.key === KEY_ESCAPE) {
-        return setTimeout(() => this.cleanup(), 50)
+        return this.cleanup()
       }
 
       if ((this.isMac && this.pressedMetaKey || !this.isMac && event.ctrlKey)) {
@@ -135,8 +141,7 @@ export class PointerTracking {
         } else if (event.key === KEY_X) {
           this.handleCut()
         } else if (event.key === KEY_D) {
-          event.preventDefault()
-          this.handleDuplicate()
+          this.handleDuplicate(event)
         }
       }
     }
@@ -144,29 +149,39 @@ export class PointerTracking {
 
   handleCopy = () => {
     if (this.tryStart(this.lastPoint)) {
+      this.type = TYPE_EVENT.COPY
       let pev = this.createEventFromMouse(this.lastPoint, true)
       this.emitter.trigger('pointer-copy', pev)
     } else {
-      setTimeout(() => this.cleanup(), 50)
+      this.cleanup()
     }
   }
 
   handlePaste = () => {
+    if (this.type === TYPE_EVENT.NONE)
+      return
+
     this.emitter.trigger('pointer-paste', this.createEventFromMouse(this.lastPoint))
     setTimeout(() => this.cleanup(), 50)
   }
 
   handleCut = () => {
     if (this.tryStart(this.lastPoint)) {
+      this.type = TYPE_EVENT.CUT
       let pev = this.createEventFromMouse(this.lastPoint, true)
       this.emitter.trigger('pointer-cut', pev)
     } else {
-      setTimeout(() => this.cleanup(), 50)
+      this.cleanup()
     }
   }
 
-  handleDuplicate = () => {
+  handleDuplicate = (event) => {
     this.handleCopy()
+
+    if (this.type === TYPE_EVENT.NONE)
+      return
+
+    event.preventDefault()
     this.handlePaste()
   }
 

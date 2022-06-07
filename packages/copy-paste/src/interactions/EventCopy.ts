@@ -22,6 +22,14 @@ import { HitChecker } from './HitChecker'
 import { FeaturefulElementCopy } from '../dnd/FeaturefulElementCopy'
 import { buildDatePointApiWithContext } from '../utils'
 
+export enum TYPE_EVENT {
+  NONE,
+  COPY,
+  CUT,
+  PASTE,
+  DUPLICATE,
+}
+
 export class EventCopy extends Interaction {
   static SELECTOR = '.fc-event'
 

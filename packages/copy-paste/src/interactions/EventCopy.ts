@@ -46,6 +46,7 @@ export class EventCopy extends Interaction {
   receivingContext: CalendarContext | null = null
   validMutation: EventMutation | null = null
   mutatedRelevantEvents: EventStore | null = null
+  oldStyle: any = {}
 
   constructor(settings: InteractionSettings) {
     super(settings)
@@ -167,6 +168,10 @@ export class EventCopy extends Interaction {
       const parentElement = this.subjectEl.parentElement;
       parentElement.style.visibility = ''
       parentElement.style.opacity = '0.75'
+
+      this.oldStyle.zIndex === void 0 && (this.oldStyle.zIndex = parentElement.style.zIndex)
+
+      parentElement.style.zIndex = String(parentElement.parentElement.childElementCount + 1)
     }
 
     this.receivingContext = receivingContext
@@ -339,6 +344,9 @@ export class EventCopy extends Interaction {
       const parentElement = this.subjectEl.parentElement;
       parentElement.style.visibility = ''
       parentElement.style.opacity = ''
+
+      parentElement.style.zIndex = this.oldStyle.zIndex
+      this.oldStyle = {}
     }
 
     this.type = null

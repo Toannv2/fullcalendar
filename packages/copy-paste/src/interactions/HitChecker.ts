@@ -79,6 +79,7 @@ export class HitChecker {
     let hit = this.queryHitForOffset(
       ev.pageX + this.coordAdjust!.left,
       ev.pageY + this.coordAdjust!.top,
+      ev.isFromGlobal
     )
 
     if (forceHandle || !isHitsEqual(this.movingHit, hit)) {
@@ -92,7 +93,8 @@ export class HitChecker {
 
     this.finalHit = this.queryHitForOffset(
       ev.pageX + this.coordAdjust!.left,
-      ev.pageY + this.coordAdjust!.top
+      ev.pageY + this.coordAdjust!.top,
+      ev.isFromGlobal
     )
 
     if (!this.finalHit) return
@@ -119,8 +121,8 @@ export class HitChecker {
       adjustedPoint = constrainPoint(adjustedPoint, subjectRect)
     }
 
-    let initialHit = this.initialHit = this.queryHitForOffset(adjustedPoint.left, adjustedPoint.top)
-    if (initialHit) {
+    const initialHit = this.initialHit = this.queryHitForOffset(adjustedPoint.left, adjustedPoint.top, ev.isFromGlobal)
+    if (initialHit !== null) {
       if (this.useSubjectCenter && subjectRect) {
         let slicedSubjectRect = intersectRects(subjectRect, initialHit.rect)
         if (slicedSubjectRect) {
@@ -151,7 +153,7 @@ export class HitChecker {
     this.offsetTrackers = {}
   }
 
-  queryHitForOffset(offsetLeft: number, offsetTop: number): Hit | null {
+  queryHitForOffset(offsetLeft: number, offsetTop: number, isFromGlobal = false): Hit | null {
     let { droppableStore, offsetTrackers } = this
     let bestHit: Hit | null = null
 
@@ -159,10 +161,7 @@ export class HitChecker {
       let component = droppableStore[id].component
       let offsetTracker = offsetTrackers[id]
 
-      if (
-        offsetTracker && // wasn't destroyed mid-drag
-        offsetTracker.isWithinClipping(offsetLeft, offsetTop)
-      ) {
+      if (offsetTracker && (isFromGlobal || !isFromGlobal && offsetTracker.isWithinClipping(offsetLeft, offsetTop))) {
         let originLeft = offsetTracker.computeLeft()
         let originTop = offsetTracker.computeTop()
         let positionLeft = offsetLeft - originLeft

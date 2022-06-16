@@ -1,6 +1,26 @@
 import { elementClosest, Emitter, PointerDragEvent } from '@fullcalendar/common'
 import { TYPE_EVENT } from './EventCopy'
 
+//@ts-ignore
+window.calendarUtils = window.calendarUtils || {}
+//@ts-ignore
+window.calendarUtils.emitter = window.calendarUtils.emitter || new Emitter()
+
+function copy(event) {
+  //@ts-ignore
+  window.calendarUtils.emitter.trigger('copy', event)
+}
+
+function cut(event) {
+  //@ts-ignore
+  window.calendarUtils.emitter.trigger('cut', event)
+}
+
+//@ts-ignore
+window.calendarUtils.copy = window.calendarUtils.copy || copy
+//@ts-ignore
+window.calendarUtils.cut = window.calendarUtils.cut || cut
+
 const KEY_META = 'Meta'
 const KEY_C = 'c'
 const KEY_V = 'v'
@@ -45,6 +65,12 @@ export class PointerTracking {
     document.body.addEventListener('mousemove', this.handleMouseMove, false)
     document.body.addEventListener('keydown', this.handleKeyDown, false)
     document.body.addEventListener('keyup', this.handleKeyUp, false)
+
+    // global utils
+    // @ts-ignore
+    window.calendarUtils.emitter.on('copy', this.handleGlobalCopy)
+    // @ts-ignore
+    window.calendarUtils.emitter.on('cut', this.handleGlobalCut)
   }
 
   destroy() {
@@ -54,12 +80,30 @@ export class PointerTracking {
     document.body.removeEventListener('mousemove', this.handleMouseMove, false)
     document.body.removeEventListener('keydown', this.handleKeyDown, false)
     document.body.removeEventListener('keyup', this.handleKeyUp, false)
+
+    // @ts-ignore
+    window.calendarUtils.emitter.off('copy', this.handleGlobalCopy)
+    // @ts-ignore
+    window.calendarUtils.emitter.off('cut', this.handleGlobalCut)
   }
 
   tryStart = (ev: UIEvent): boolean => {
     let subjectEl = this.querySubjectEl(ev)
 
     let fcTimeEl = (ev.target as HTMLElement).closest(CONTAINER_CLASS)
+    let containerFcTimeEl = (this.containerEl as HTMLElement).closest(CONTAINER_CLASS)
+    if (subjectEl && fcTimeEl === containerFcTimeEl) {
+      this.subjectEl = subjectEl
+      return true
+    }
+
+    return false
+  }
+
+  globalTryStart = (element: HTMLElement): boolean => {
+    let subjectEl = this.queryEl(element)
+
+    let fcTimeEl = element.closest(CONTAINER_CLASS)
     let containerFcTimeEl = (this.containerEl as HTMLElement).closest(CONTAINER_CLASS)
     if (subjectEl && fcTimeEl === containerFcTimeEl) {
       this.subjectEl = subjectEl
@@ -79,6 +123,13 @@ export class PointerTracking {
   querySubjectEl(ev: UIEvent): HTMLElement {
     if (this.selector) {
       return elementClosest(ev.target as HTMLElement, this.selector)
+    }
+    return this.containerEl as HTMLElement
+  }
+
+  queryEl(el: HTMLElement): HTMLElement {
+    if (this.selector) {
+      return el.closest(this.selector)
     }
     return this.containerEl as HTMLElement
   }
@@ -190,6 +241,29 @@ export class PointerTracking {
     this.emitter.trigger('mousemove', this.createEventFromMouse(ev, true))
   }
 
+  // Event from global
+  // ----------------------------------------------------------------------------------------------------
+
+  handleGlobalCopy = (el) => {
+    if (el && this.globalTryStart(el)) {
+      this.type = TYPE_EVENT.COPY
+      let pev = this.createEventFromElement(this.subjectEl)
+      this.emitter.trigger('pointer-copy', pev)
+    } else {
+      this.cleanup()
+    }
+  }
+
+  handleGlobalCut = (el) => {
+    if (el && this.globalTryStart(el)) {
+      this.type = TYPE_EVENT.CUT
+      let pev = this.createEventFromElement(this.subjectEl)
+      this.emitter.trigger('pointer-cut', pev)
+    } else {
+      this.cleanup()
+    }
+  }
+
   // Event Normalization
   // ----------------------------------------------------------------------------------------------------
 
@@ -217,38 +291,22 @@ export class PointerTracking {
     }
   }
 
-  createEventFromTouch(ev: TouchEvent, isFirst?: boolean): PointerDragEvent {
-    let touches = ev.touches
-    let pageX
-    let pageY
+  createEventFromElement(el: Element): PointerDragEvent {
     let deltaX = 0
     let deltaY = 0
 
-    // if touch coords available, prefer,
-    // because FF would give bad ev.pageX ev.pageY
-    if (touches && touches.length) {
-      pageX = touches[0].pageX
-      pageY = touches[0].pageY
-    } else {
-      pageX = (ev as any).pageX
-      pageY = (ev as any).pageY
-    }
+    const rect = el.getBoundingClientRect()
 
-    // TODO: repeat code
-    if (isFirst) {
-      this.origPageX = pageX
-      this.origPageY = pageY
-    } else {
-      deltaX = pageX - this.origPageX
-      deltaY = pageY - this.origPageY
-    }
+    this.origPageX = rect.x + rect.width / 2 + window.scrollX
+    this.origPageY = rect.y + rect.height / 2 + window.scrollY
 
     return {
-      origEvent: ev,
-      isTouch: true,
+      // @ts-ignore
+      origEvent: { target: el },
+      isFromGlobal: true,
       subjectEl: this.subjectEl,
-      pageX,
-      pageY,
+      pageX: rect.x + (rect.width) / 2 + window.scrollX,
+      pageY: rect.y + (rect.height) / 2 + window.scrollY,
       deltaX,
       deltaY
     }

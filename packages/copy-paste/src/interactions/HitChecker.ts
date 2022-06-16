@@ -79,6 +79,7 @@ export class HitChecker {
     let hit = this.queryHitForOffset(
       ev.pageX + this.coordAdjust!.left,
       ev.pageY + this.coordAdjust!.top,
+      //@ts-ignore
       ev.isFromGlobal
     )
 
@@ -94,6 +95,7 @@ export class HitChecker {
     this.finalHit = this.queryHitForOffset(
       ev.pageX + this.coordAdjust!.left,
       ev.pageY + this.coordAdjust!.top,
+      //@ts-ignore
       ev.isFromGlobal
     )
 
@@ -121,6 +123,7 @@ export class HitChecker {
       adjustedPoint = constrainPoint(adjustedPoint, subjectRect)
     }
 
+    //@ts-ignore
     const initialHit = this.initialHit = this.queryHitForOffset(adjustedPoint.left, adjustedPoint.top, ev.isFromGlobal)
     if (initialHit !== null) {
       if (this.useSubjectCenter && subjectRect) {

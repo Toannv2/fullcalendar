@@ -59,8 +59,6 @@ export class PointerTracking {
     this.containerEl = containerEl
     this.emitter = new Emitter()
 
-    // @ts-ignore
-    containerEl.parentElement.addEventListener('scroll', this.handleScroll)
     document.body.addEventListener('mousedown', this.handleMouseDown, false)
     document.body.addEventListener('mousemove', this.handleMouseMove, false)
     document.body.addEventListener('keydown', this.handleKeyDown, false)
@@ -74,8 +72,6 @@ export class PointerTracking {
   }
 
   destroy() {
-    // @ts-ignore
-    this.containerEl.parentElement.removeEventListener('scroll', this.handleScroll)
     document.body.removeEventListener('mousedown', this.handleMouseDown, false)
     document.body.removeEventListener('mousemove', this.handleMouseMove, false)
     document.body.removeEventListener('keydown', this.handleKeyDown, false)
@@ -132,10 +128,6 @@ export class PointerTracking {
       return el.closest(this.selector)
     }
     return this.containerEl as HTMLElement
-  }
-
-  handleScroll = (event) => {
-    this.emitter.trigger('scroll', true)
   }
 
   handleMouseDown = (event) => {
@@ -292,23 +284,17 @@ export class PointerTracking {
   }
 
   createEventFromElement(el: Element): PointerDragEvent {
-    let deltaX = 0
-    let deltaY = 0
-
     const rect = el.getBoundingClientRect()
-
-    this.origPageX = rect.x + rect.width / 2 + window.scrollX
-    this.origPageY = rect.y + rect.height / 2 + window.scrollY
 
     return {
       // @ts-ignore
       origEvent: { target: el },
       isFromGlobal: true,
       subjectEl: this.subjectEl,
-      pageX: rect.x + (rect.width) / 2 + window.scrollX,
-      pageY: rect.y + (rect.height) / 2 + window.scrollY,
-      deltaX,
-      deltaY
+      pageX: rect.x + (rect.width / 2) + window.scrollX,
+      pageY: rect.y + (rect.height / 2) + window.scrollY,
+      deltaX: 0,
+      deltaY: 0
     }
   }
 }

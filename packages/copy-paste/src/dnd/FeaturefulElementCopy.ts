@@ -1,7 +1,7 @@
 import {
   PointerDragEvent,
   allowSelection,
-  allowContextMenu, Emitter, preventSelection, preventContextMenu, elementClosest
+  allowContextMenu, Emitter, preventSelection, preventContextMenu
 } from '@fullcalendar/common'
 import { PointerTracking } from '../interactions/PointerTracking'
 import { ElementMirror } from './ElementMirror'
@@ -9,7 +9,6 @@ import { AutoScroller } from './AutoScroller'
 
 export class FeaturefulElementCopy {
   mirror: ElementMirror
-  mirrorStatic: ElementMirror
   pointer: PointerTracking
 
   autoScroller: AutoScroller
@@ -29,8 +28,6 @@ export class FeaturefulElementCopy {
   isDistanceSurpassed: boolean = false
   delayTimeoutId: number | null = null
 
-  initialScroll = { scrollTop: 0, scrollLeft: 0 }
-
   containerEl: HTMLElement
 
   constructor(containerEl: HTMLElement, selector?: string) {
@@ -38,20 +35,15 @@ export class FeaturefulElementCopy {
 
     this.emitter = new Emitter()
     this.mirror = new ElementMirror()
-    this.mirrorStatic = new ElementMirror()
     this.autoScroller = new AutoScroller()
 
     let pointer = this.pointer = new PointerTracking(containerEl)
-    pointer.emitter.on('scroll', this.onScroll)
     pointer.emitter.on('pointer-copy', this.onPointerCopy)
     pointer.emitter.on('pointer-cut', this.onPointerCut)
     pointer.emitter.on('pointer-paste', this.onPointerPaste)
     pointer.emitter.on('mousedown', this.onMousedown)
     pointer.emitter.on('mousemove', this.onMousemove)
     pointer.emitter.on('cleanup', this.cleanup)
-
-    this.mirrorStatic.parentNode = elementClosest(containerEl, '.fc')
-    this.mirrorStatic.position = 'absolute'
 
     if (selector) {
       pointer.selector = selector
@@ -60,16 +52,6 @@ export class FeaturefulElementCopy {
 
   destroy() {
     this.pointer.destroy()
-  }
-
-  onScroll = () => {
-    if (this.type !== 'copy')
-      return
-
-    const parentElement = this.containerEl.parentElement
-    this.mirrorStatic.handleScroll(
-      parentElement.scrollLeft - this.initialScroll.scrollLeft,
-      parentElement.scrollTop - this.initialScroll.scrollTop)
   }
 
   onPointerCopy = (ev: PointerDragEvent) => {
@@ -100,16 +82,6 @@ export class FeaturefulElementCopy {
 
     this.mirror.setIsVisible(true)
     this.mirror.start(ev.subjectEl as HTMLElement, ev.pageX, ev.pageY)
-
-    //@ts-ignore
-    const parentRect = this.mirrorStatic.parentNode.getBoundingClientRect()
-    const parentElement = this.containerEl.parentElement
-
-    this.initialScroll.scrollTop = parentElement.scrollTop
-    this.initialScroll.scrollLeft = parentElement.scrollLeft
-
-    this.mirrorStatic.setIsVisible(true)
-    this.mirrorStatic.start(ev.subjectEl as HTMLElement, -parentRect.x, -parentRect.y)
   }
 
   onMousedown = (ev: PointerDragEvent) => {
@@ -140,10 +112,6 @@ export class FeaturefulElementCopy {
   cleanup = () => {
     this.type = null
     this.mirror.stop(
-      false, () => {
-      }
-    )
-    this.mirrorStatic.stop(
       false, () => {
       }
     )

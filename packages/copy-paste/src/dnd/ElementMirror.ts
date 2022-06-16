@@ -6,11 +6,6 @@ The moving element is a clone of some other element.
 Must call start + handleMove + stop.
 */
 export class ElementMirror {
-  pageX: number = 0
-  pageY: number = 0
-  scrollLeft: number = 0
-  scrollTop: number = 0
-  position = 'fixed'
   isVisible: boolean = false // must be explicitly enabled
   origScreenX?: number
   origScreenY?: number
@@ -28,25 +23,17 @@ export class ElementMirror {
 
   start(sourceEl: HTMLElement, pageX: number, pageY: number) {
     this.sourceEl = sourceEl
-    this.pageX = pageX
-    this.pageY = pageY
     this.sourceElRect = this.sourceEl.getBoundingClientRect()
-    this.origScreenX = pageX - window.pageXOffset
-    this.origScreenY = pageY - window.pageYOffset
-    this.deltaX = this.position === 'fixed' ? 0 : pageX
-    this.deltaY = this.position === 'fixed' ? 0 : pageY
+    this.origScreenX = pageX - window.scrollX
+    this.origScreenY = pageY - window.scrollY
+    this.deltaX = 0
+    this.deltaY = 0
     this.updateElPosition()
   }
 
   handleMove(pageX: number, pageY: number) {
-    this.deltaX = this.position === 'fixed' ? (pageX - window.pageXOffset) - this.origScreenX! : pageX
-    this.deltaY = this.position === 'fixed' ? (pageY - window.pageYOffset) - this.origScreenY! : pageY
-    this.updateElPosition()
-  }
-
-  handleScroll(scrollX: number, scrollY: number) {
-    this.deltaX = this.pageX - scrollX
-    this.deltaY = this.pageY - scrollY
+    this.deltaX = (pageX - window.scrollX) - this.origScreenX!
+    this.deltaY = (pageY - window.scrollY) - this.origScreenY!
     this.updateElPosition()
   }
 
@@ -141,7 +128,7 @@ export class ElementMirror {
       mirrorEl.classList.add('fc-event-dragging')
 
       applyStyle(mirrorEl, {
-        position: this.position,
+        position: 'fixed',
         zIndex: this.zIndex,
         visibility: '', // in case original element was hidden by the drag effect
         boxSizing: 'border-box', // for easy width/height

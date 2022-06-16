@@ -95,13 +95,12 @@ export class EventCopy extends Interaction {
 
     let origTarget = ev.origEvent.target as HTMLElement
 
-    let { mirror, mirrorStatic } = manager
+    let { mirror } = manager
     let { options } = component.context
     if (options.fixedMirrorParent) {
-      mirror.parentNode = mirrorStatic.parentNode = options.fixedMirrorParent
-      mirrorStatic.parentNode = options.fixedMirrorParent
+      mirror.parentNode = options.fixedMirrorParent
     } else {
-      mirror.parentNode = mirrorStatic.parentNode = elementClosest(origTarget, '.fc')
+      mirror.parentNode = elementClosest(origTarget, '.fc')
     }
 
     mirror.revertDuration = options.dragRevertDuration
@@ -164,7 +163,11 @@ export class EventCopy extends Interaction {
       !hit || !getElRoot(this.subjectEl).querySelector('.fc-event-mirror')
     )
 
-    this.manager.mirrorStatic.setIsVisible(this.type === 'copy')
+    if (this.type === 'copy') {
+      const parentElement = this.subjectEl.parentElement;
+      parentElement.style.visibility = ''
+      parentElement.style.opacity = '0.75'
+    }
 
     this.receivingContext = receivingContext
     this.validMutation = mutation
@@ -331,6 +334,13 @@ export class EventCopy extends Interaction {
 
   cleanup = () => { // reset all internal state
     this.clearDrag()
+
+    if (this.subjectEl !== null) {
+      const parentElement = this.subjectEl.parentElement;
+      parentElement.style.visibility = ''
+      parentElement.style.opacity = ''
+    }
+
     this.type = null
     this.subjectSeg = null
     this.eventRange = null
@@ -419,44 +429,3 @@ function computeEventMutation(hit0: Hit, hit1: Hit, massagers: eventDragMutation
 
   return mutation
 }
-
-//
-// function computeEventMutation(hit0: Hit, hit1: Hit, massagers: eventDragMutationMassager[], subjectSeg: any): EventMutation {
-//   let dateSpan0 = hit0.dateSpan
-//   let dateSpan1 = hit1.dateSpan
-//   let date0 = subjectSeg.start || subjectSeg?.eventRange?.range?.start || dateSpan0.range.start
-//   let date1 = dateSpan1.range.start
-//   let standardProps = {} as any
-//
-//   if (dateSpan0.allDay !== dateSpan1.allDay) {
-//     standardProps.allDay = dateSpan1.allDay
-//     standardProps.hasEnd = hit1.context.options.allDayMaintainDuration
-//
-//     if (dateSpan1.allDay) {
-//       date0 = startOfDay(date0)
-//     }
-//   }
-//
-//   let delta = diffDates(
-//     date0, date1,
-//     hit0.context.dateEnv,
-//     hit0.componentId === hit1.componentId ?
-//       hit0.largeUnit :
-//       null
-//   )
-//
-//   if (delta.milliseconds) { // has hours/minutes/seconds
-//     standardProps.allDay = false
-//   }
-//
-//   let mutation: EventMutation = {
-//     datesDelta: delta,
-//     standardProps
-//   }
-//
-//   for (let massager of massagers) {
-//     massager(mutation, hit0, hit1)
-//   }
-//
-//   return mutation
-// }

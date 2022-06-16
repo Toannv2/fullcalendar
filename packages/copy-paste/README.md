@@ -1,7 +1,7 @@
-
 # FullCalendar Copy-paste Plugin
 
-The Plugin expands for [FullCalendar](https://fullcalendar.io/ "fullcalendar.io"), which aims to add copy and paste features using shortcuts.
+The Plugin expands for [FullCalendar](https://fullcalendar.io/ "fullcalendar.io"), which aims to add copy and paste
+features using shortcuts.
 
 <table role="table">
     <thead>
@@ -50,28 +50,30 @@ The Plugin expands for [FullCalendar](https://fullcalendar.io/ "fullcalendar.io"
 <br />
 
 ## Installation
+
 1. Install this library in your project.
-```
+
+```copy
 npm i fullcalendar-copy-paste
 ```
 
 <br />
 
 2. Use the plugin.
-```
-...
+
+```ts
 import copyPastePlugin from 'fullcalendar-copy-paste'
-...
+
 new Calendar(calendarEl, {
-    plugins: [copyPastePlugin],
-    height: "100%",
-    ...
+  plugins: [copyPastePlugin],
+  height: "100%",
+}
 ```
 
 <br />
 
-
 ## Configuration
+
 <table role="table">
     <thead>
         <tr>
@@ -94,26 +96,41 @@ new Calendar(calendarEl, {
     <tr>
     </tr></tbody>
 </table>
+<br />
 
 Exp:
-```
-...
+
+```ts
 new Calendar(calendarEl, {
-    plugins: [copyPastePlugin],
-    height: "100%",
-    previewCopy: false,
-    eventCopy: (trigger) => {
-        const oldEvent = trigger.oldEvent;
-        const newEvent = trigger.event;
-        const type = trigger.type;
-        if (trigger.type === 'copy') {
-            ...
-        } else if (trigger.type === 'cut') {
-            ...
-        }
+  plugins: [copyPastePlugin],
+  height: "100%",
+  previewCopy: false,
+  eventCopy: (trigger) => {
+    const oldEvent = trigger.oldEvent;
+    const newEvent = trigger.event;
+    const type = trigger.type;
+    if (trigger.type === 'copy') {
+      // do something
+    } else if (trigger.type === 'cut') {
+      // do something
     }
-  ...
-}
+  }
+});
+```
+
+<br />
+
+## API:
+API for external code:
+
+```ts
+window.calendarUtils.copy(element as HTMLElement)
+```
+
+<br />
+
+```ts
+window.calendarUtils.cut(element as HTMLElement);
 ```
 
 <br />
@@ -121,18 +138,21 @@ new Calendar(calendarEl, {
 ## Demo:
 
 #### Copy:
+
 <p>
     <img src="https://raw.githubusercontent.com/toanS2/fullcalendar/master/examples/images/copy-m.gif" width="500" alt="Copy" />
 </p>
 <br />
 
 #### Cut:
+
 <p>
     <img src="https://raw.githubusercontent.com/toanS2/fullcalendar/master/examples/images/cut-m.gif" width="500" alt="Copy" />
 </p>
 <br />
 
 #### Duplicate:
+
 <p>
     <img src="https://raw.githubusercontent.com/toanS2/fullcalendar/master/examples/images/duplicate-m.gif" width="500" alt="Copy" />
 </p>
